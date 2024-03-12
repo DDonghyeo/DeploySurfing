@@ -3,14 +3,11 @@ package com.ds.deploysurfingbackend.domain;
 import com.ds.deploysurfingbackend.domain.type.AppStatus;
 import com.ds.deploysurfingbackend.domain.type.AppType;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Getter
 @Builder
-@AllArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @Entity
 @Table(name = "app")
