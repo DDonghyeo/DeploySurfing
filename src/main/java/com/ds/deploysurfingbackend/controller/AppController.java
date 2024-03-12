@@ -30,7 +30,7 @@ public class AppController {
     }
 
     @PutMapping("/update")
-    public ResponseEntity<?> updateApp(@RequestParam("appId") String appId, @RequestBody AppDto.updateAppDto ) {
+    public ResponseEntity<?> updateApp(@RequestParam("appId") String appId, @RequestBody AppDto.updateAppDto updateAppDto ) {
         return ResponseEntity.ok(null);
     }
 
