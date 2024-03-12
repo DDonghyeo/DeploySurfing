@@ -1,5 +1,7 @@
 package com.ds.deploysurfingbackend.domain.type;
 
+import com.ds.deploysurfingbackend.global.exception.CustomException;
+import com.ds.deploysurfingbackend.global.exception.ErrorCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 

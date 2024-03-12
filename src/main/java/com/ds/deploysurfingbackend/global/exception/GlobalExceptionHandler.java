@@ -6,7 +6,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import static com.ddonghyeo.appservice.global.exception.ErrorCode.INVALID_VALUE;
 import static com.ds.deploysurfingbackend.global.exception.ErrorCode.INVALID_VALUE;
 
 @RestControllerAdvice

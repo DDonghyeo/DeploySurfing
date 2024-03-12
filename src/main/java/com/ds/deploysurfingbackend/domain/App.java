@@ -1,5 +1,7 @@
 package com.ds.deploysurfingbackend.domain;
 
+import com.ds.deploysurfingbackend.domain.type.AppStatus;
+import com.ds.deploysurfingbackend.domain.type.AppType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
