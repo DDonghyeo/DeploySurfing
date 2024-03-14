@@ -2,6 +2,7 @@ package com.ds.deploysurfingbackend.domain;
 
 import com.ds.deploysurfingbackend.domain.type.AppStatus;
 import com.ds.deploysurfingbackend.domain.type.AppType;
+import com.ds.deploysurfingbackend.dto.AppDto;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -34,4 +35,13 @@ public class App extends BaseTimeEntity {
 
     @Column(name = "user_id", nullable = false)
     private Long userId;
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public void update(AppDto.updateAppDto updateAppDto) {
+        name = updateAppDto.getName();
+        description = updateAppDto.getDescription();
+    }
 }

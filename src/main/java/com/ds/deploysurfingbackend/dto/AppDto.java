@@ -1,5 +1,6 @@
 package com.ds.deploysurfingbackend.dto;
 
+import com.ds.deploysurfingbackend.domain.App;
 import com.ds.deploysurfingbackend.domain.type.AppStatus;
 import com.ds.deploysurfingbackend.domain.type.AppType;
 import jakarta.validation.constraints.NotBlank;
@@ -21,6 +22,14 @@ public class AppDto {
         public AppStatus status;
 
         public Long userId;
+
+        public App toEntity() {
+            return App.builder()
+                    .name(name)
+                    .description(description)
+                    .status(AppStatus.TERMINATED) // 초기는 종료 상태
+                    .build();
+        }
     }
 
     @Getter(lazy = true)
