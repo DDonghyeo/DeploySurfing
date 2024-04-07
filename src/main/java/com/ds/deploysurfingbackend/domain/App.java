@@ -36,6 +36,30 @@ public class App extends BaseTimeEntity {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
+    // ------------ GitHub 관련 내용 -------------
+    private String repoUrl;
+    private String owner;
+
+    private String repoName;
+
+    private String repoPublicKeyId;
+
+    private String repoPublicKey;
+
+    //------------------------------------------
+
+
+
+    private boolean isConfig;
+
+    public void setRepoPublicKeyId(String repoPublicKeyId) {
+        this.repoPublicKeyId = repoPublicKeyId;
+    }
+
+    public void setRepoPublicKey(String repoPublicKey) {
+        this.repoPublicKey = repoPublicKey;
+    }
+
     public void setUserId(Long userId) {
         this.userId = userId;
     }
