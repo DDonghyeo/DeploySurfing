@@ -8,7 +8,7 @@ import lombok.Getter;
 
 public class AppDto {
 
-    @Getter(lazy = true)
+    @Getter
     public static class createAppDto {
 
         @NotBlank(message = "[ERROR] 이름은 필수입니다.")
@@ -32,7 +32,7 @@ public class AppDto {
         }
     }
 
-    @Getter(lazy = true)
+    @Getter
     public static class updateAppDto {
 
         public String name;
