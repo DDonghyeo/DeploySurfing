@@ -1,8 +1,12 @@
 package com.ds.deploysurfingbackend.service;
 
 import com.ds.deploysurfingbackend.domain.App;
+import com.ds.deploysurfingbackend.domain.User;
 import com.ds.deploysurfingbackend.dto.AppDto;
+import com.ds.deploysurfingbackend.dto.GitHubPublicKeyDto;
 import com.ds.deploysurfingbackend.repository.AppJpaRepository;
+import com.ds.deploysurfingbackend.repository.UserRepository;
+import com.ds.deploysurfingbackend.utils.GitHubUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,11 +20,19 @@ public class AppService {
 
     private final AppJpaRepository appRepository;
 
+    private final UserRepository userRepository;
+
     //앱 생성
     public ResponseEntity<?> createApp(AppDto.createAppDto createAppDto) {
         App app = createAppDto.toEntity();
 
+        Long userId = createAppDto.getUserId();
+
+        User user = userRepository.findById(userId).orElseThrow();
         //repo Settings
+        GitHubPublicKeyDto publicKeyDto = GitHubUtils.getRepositoryPublicKey(app, user.getGitHubToken());
+        app.setRepoPublicKeyId(publicKeyDto.getKey_id());
+        app.setRepoPublicKey(publicKeyDto.getKey());
 
 
         appRepository.save(app);

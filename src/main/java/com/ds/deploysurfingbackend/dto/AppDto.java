@@ -20,7 +20,6 @@ public class AppDto {
         @NotBlank(message = "[ERROR] 이름은 필수입니다.")
         public String name;
 
-        @NotBlank(message = "[ERROR] 타입은 필수입니다.")
         public AppType type;
 
         @NotBlank(message = "[ERROR] GitHub URL은 필수입니다.")
@@ -55,6 +54,7 @@ public class AppDto {
                     .repoUrl(gitHubUrl)
                     .owner(owner)
                     .repoName(repoName)
+                    .type(type==AppType.SPRING? AppType.SPRING : AppType.DJANGO)
                     .status(AppStatus.TERMINATED) // 초기는 종료 상태
                     .userId(userId)
                     .build();
