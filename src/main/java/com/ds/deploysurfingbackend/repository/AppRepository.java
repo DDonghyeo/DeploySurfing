@@ -41,15 +41,11 @@ public class AppRepository {
 
     }
 
-    public App findById(String appId) {
-        try {
-            return appJpaRepository.findById(appId).orElseThrow(() -> {
-                throw new CustomException(ErrorCode.NO_CONTENT_FOUND);
-            });
-        } catch (IllegalArgumentException illegalArgumentException) {
-            throw new CustomException(ErrorCode.INVALID_VALUE);
-        }
-
+     public App findById(String appId) {
+         return appJpaRepository.findById(appId).orElseThrow(() -> {
+             throw new CustomException(ErrorCode.INVALID_VALUE);
+         }
+         );
     }
 
     public List<App> findAllByUserId(Long userId) {
