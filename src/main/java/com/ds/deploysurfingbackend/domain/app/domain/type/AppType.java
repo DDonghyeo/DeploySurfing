@@ -1,4 +1,4 @@
-package com.ds.deploysurfingbackend.domain.type;
+package com.ds.deploysurfingbackend.domain.app.domain.type;
 
 import com.ds.deploysurfingbackend.global.exception.CustomException;
 import com.ds.deploysurfingbackend.global.exception.ErrorCode;

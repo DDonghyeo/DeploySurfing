@@ -1,13 +1,12 @@
-package com.ds.deploysurfingbackend.dto;
+package com.ds.deploysurfingbackend.domain.app.dto;
 
-import com.ds.deploysurfingbackend.domain.App;
-import com.ds.deploysurfingbackend.domain.type.AppStatus;
-import com.ds.deploysurfingbackend.domain.type.AppType;
+import com.ds.deploysurfingbackend.domain.app.domain.App;
+import com.ds.deploysurfingbackend.domain.app.domain.type.AppStatus;
+import com.ds.deploysurfingbackend.domain.app.domain.type.AppType;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

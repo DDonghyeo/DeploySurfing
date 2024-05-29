@@ -1,18 +1,13 @@
-package com.ds.deploysurfingbackend.utils;
+package com.ds.deploysurfingbackend.global.utils;
 
-import com.ds.deploysurfingbackend.domain.App;
-import com.ds.deploysurfingbackend.dto.GitHubPublicKeyDto;
-import com.goterl.lazysodium.Sodium;
-import com.goterl.lazysodium.SodiumJava;
+import com.ds.deploysurfingbackend.domain.app.domain.App;
+import com.ds.deploysurfingbackend.domain.app.dto.GitHubPublicKeyDto;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.catalina.connector.ClientAbortException;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-import java.util.HashMap;
 import java.util.List;
 
 @Slf4j
@@ -44,7 +39,7 @@ public class GitHubUtils {
      * /repos/{owner}/{repo}/actions/secrets/{secret_name}
      */
 
-    public static void createActionSecret(App app, String secretName, String gitHubToken) {
+    public static void createActionSecret(App app, String gitHubToken, String secretName, String secretValue ) {
 
         String url = "https://api.github.com/"
                 + "repos" + "/"
@@ -62,19 +57,10 @@ public class GitHubUtils {
         //Repository Public Key를 이용해서 retrieve 되어야 함
         SodiumUtils.encrypt();
 
-        //APPLICATION_YML
-        //DOCKERHUB_IMAGENAME
-        //DOCKERHUB_TOKEN
-        //DOCKERHUB_USERNAME
-        //EC2_HOST
-        //EC2_PASSWORD
-        //EC2_SSH_PORT
-        //EC2_USERNAME
-        //SSL_KEY
+
         Mono<String> userResponseDtoMono =
                 WebClient.create(url)
                         .put()
-                        .accept(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + gitHubToken)
                         .retrieve()
                         .bodyToMono(String.class);

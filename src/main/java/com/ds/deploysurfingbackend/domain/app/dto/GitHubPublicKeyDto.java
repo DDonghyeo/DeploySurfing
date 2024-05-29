@@ -1,4 +1,4 @@
-package com.ds.deploysurfingbackend.dto;
+package com.ds.deploysurfingbackend.domain.app.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

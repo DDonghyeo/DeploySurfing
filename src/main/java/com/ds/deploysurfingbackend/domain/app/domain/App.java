@@ -1,8 +1,8 @@
-package com.ds.deploysurfingbackend.domain;
+package com.ds.deploysurfingbackend.domain.app.domain;
 
-import com.ds.deploysurfingbackend.domain.type.AppStatus;
-import com.ds.deploysurfingbackend.domain.type.AppType;
-import com.ds.deploysurfingbackend.dto.AppDto;
+import com.ds.deploysurfingbackend.domain.app.domain.type.AppStatus;
+import com.ds.deploysurfingbackend.domain.app.domain.type.AppType;
+import com.ds.deploysurfingbackend.domain.app.dto.AppDto;
 import jakarta.persistence.*;
 import lombok.*;
 

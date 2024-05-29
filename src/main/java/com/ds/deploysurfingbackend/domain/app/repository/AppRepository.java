@@ -1,11 +1,10 @@
-package com.ds.deploysurfingbackend.repository;
+package com.ds.deploysurfingbackend.domain.app.repository;
 
-import com.ds.deploysurfingbackend.domain.App;
+import com.ds.deploysurfingbackend.domain.app.domain.App;
 import com.ds.deploysurfingbackend.global.exception.CustomException;
 import com.ds.deploysurfingbackend.global.exception.ErrorCode;
 import jakarta.persistence.EntityExistsException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;

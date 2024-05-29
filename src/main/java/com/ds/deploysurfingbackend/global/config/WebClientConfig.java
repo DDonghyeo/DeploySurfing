@@ -1,4 +1,4 @@
-package com.ds.deploysurfingbackend.config;
+package com.ds.deploysurfingbackend.global.config;
 
 import io.netty.channel.ChannelOption;
 import org.springframework.context.annotation.Bean;

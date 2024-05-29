@@ -1,8 +1,6 @@
-package com.ds.deploysurfingbackend.domain;
+package com.ds.deploysurfingbackend.domain.user.domain;
 
-import com.ds.deploysurfingbackend.domain.type.AppStatus;
-import com.ds.deploysurfingbackend.domain.type.AppType;
-import com.ds.deploysurfingbackend.dto.AppDto;
+import com.ds.deploysurfingbackend.domain.app.domain.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
 

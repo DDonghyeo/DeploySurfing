@@ -1,6 +1,7 @@
 package com.ds.deploysurfingbackend.utils;
 
-import com.ds.deploysurfingbackend.repository.AppJpaRepository;
+import com.ds.deploysurfingbackend.domain.app.repository.AppJpaRepository;
+import com.ds.deploysurfingbackend.global.utils.GitHubUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,4 +1,4 @@
-package com.ds.deploysurfingbackend.domain;
+package com.ds.deploysurfingbackend.domain.app.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;

@@ -1,7 +1,7 @@
-package com.ds.deploysurfingbackend.controller;
+package com.ds.deploysurfingbackend.domain.app.api;
 
-import com.ds.deploysurfingbackend.dto.AppDto;
-import com.ds.deploysurfingbackend.service.AppService;
+import com.ds.deploysurfingbackend.domain.app.dto.AppDto;
+import com.ds.deploysurfingbackend.domain.app.service.AppService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

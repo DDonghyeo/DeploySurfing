@@ -1,6 +1,6 @@
-package com.ds.deploysurfingbackend.repository;
+package com.ds.deploysurfingbackend.domain.app.repository;
 
-import com.ds.deploysurfingbackend.domain.App;
+import com.ds.deploysurfingbackend.domain.app.domain.App;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

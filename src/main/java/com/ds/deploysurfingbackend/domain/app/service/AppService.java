@@ -1,12 +1,12 @@
-package com.ds.deploysurfingbackend.service;
+package com.ds.deploysurfingbackend.domain.app.service;
 
-import com.ds.deploysurfingbackend.domain.App;
-import com.ds.deploysurfingbackend.domain.User;
-import com.ds.deploysurfingbackend.dto.AppDto;
-import com.ds.deploysurfingbackend.dto.GitHubPublicKeyDto;
-import com.ds.deploysurfingbackend.repository.AppJpaRepository;
-import com.ds.deploysurfingbackend.repository.UserRepository;
-import com.ds.deploysurfingbackend.utils.GitHubUtils;
+import com.ds.deploysurfingbackend.domain.app.domain.App;
+import com.ds.deploysurfingbackend.domain.user.domain.User;
+import com.ds.deploysurfingbackend.domain.app.dto.AppDto;
+import com.ds.deploysurfingbackend.domain.app.dto.GitHubPublicKeyDto;
+import com.ds.deploysurfingbackend.domain.app.repository.AppJpaRepository;
+import com.ds.deploysurfingbackend.domain.user.repository.UserRepository;
+import com.ds.deploysurfingbackend.global.utils.GitHubUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -89,6 +89,15 @@ public class AppService {
          */
 
         //1. Action Secret 구성하기
+        //APPLICATION_YML
+        //DOCKERHUB_IMAGENAME
+        //DOCKERHUB_TOKEN
+        //DOCKERHUB_USERNAME
+        //EC2_HOST
+        //EC2_PASSWORD
+        //EC2_SSH_PORT
+        //EC2_USERNAME
+        //SSL_KEY
 
         //2. 깃허브 브랜치 만들기 : deploy
 

@@ -1,4 +1,4 @@
-package com.ds.deploysurfingbackend.domain.type;
+package com.ds.deploysurfingbackend.domain.app.domain.type;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
