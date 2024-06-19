@@ -26,9 +26,8 @@ public class AWSInstanceUtils {
     private static final String SECURITY_GROUP_DESC = "Created By DeploySurfing";
 
 
-
-
-    public static Ec2 createFreeTierEC2(String name, StaticCredentialsProvider staticCredentialsProvider) {
+    public static Ec2 createFreeTierEC2(String name,
+                                        StaticCredentialsProvider staticCredentialsProvider) {
 
         log.info(" [ AWS Utils ] 새로운 EC2를 생성합니다. 이름 ---> {}", name);
 
@@ -54,9 +53,9 @@ public class AWSInstanceUtils {
 
 
             //----------------- [ 보안 그룹 생성 ] -----------------
+            //보안 그룹 추가할 VPC ID
             List<Vpc> vpcs = describeVpc(ec2);
 
-            //보안 그룹 추가할 VPC ID
             if (vpcs.isEmpty()) {
                 throw new CustomException(ErrorCode.VPC_NOT_FOUND);
             }
@@ -64,7 +63,7 @@ public class AWSInstanceUtils {
 
             log.info(" [ AWS Utils ] 새로운 보안그룹을 생성합니다. VPC ID ---> {}", vpcId);
 
-            createBasicSecurityGroup(ec2, SECURITY_GROUP_NAME, SECURITY_GROUP_DESC, vpcId);
+            String secGroupId = createBasicSecurityGroup(ec2, SECURITY_GROUP_NAME, SECURITY_GROUP_DESC, vpcId);
 
 
             //----------------- [ EC2 실행 ] -----------------
@@ -114,6 +113,7 @@ public class AWSInstanceUtils {
                     .vpcId(vpcId)
                     .keyFilePath(keyFilePathStr)
                     .associationId(associationId)
+                    .secGroupId(secGroupId)
                     .build();
 
         } catch (Ec2Exception e) {
@@ -126,6 +126,58 @@ public class AWSInstanceUtils {
             throw new RuntimeException(e);
         }
     }
+
+
+    public static void terminateEC2(StaticCredentialsProvider staticCredentialsProvider,
+                                    String instanceId,
+                                    String allocationId,
+                                    String secGroupId,
+                                    String keyName
+    ) {
+        log.info(" [ AWS Utils ] 새로운 EC2를 종료합니다. id ---> {}", instanceId);
+
+        Region region = Region.AP_NORTHEAST_2; // 서울 REGION
+        Ec2Client ec2 = Ec2Client.builder()
+                .credentialsProvider(staticCredentialsProvider)
+                .region(region)
+                .build();
+
+
+        log.info(" [ AWS Utils ] 탄력적 IP 할당을 해제합니다. id ---> {}", instanceId);
+        disassociateAddress(ec2, allocationId);
+        log.info(" [ AWS Utils ] 탄력적 IP를 릴리즈합니다. id ---> {}", instanceId);
+        releaseEC2Address(ec2, allocationId);
+
+
+
+        //인스턴스 종료까지 기다리기 위해 Waiter 사용
+        log.info(" [ AWS Utils ] 인스턴스가 종료될 때 까지 대기합니다..");
+        TerminateInstancesRequest ti = TerminateInstancesRequest.builder()
+                .instanceIds(instanceId)
+                .build();
+        ec2.terminateInstances(ti);
+        ec2.waiter().waitUntilInstanceTerminated(r -> r.instanceIds(instanceId));
+        log.info(" [ AWS Utils ] 인스턴스 종료에 성공했습니다.");
+
+
+        log.info(" [ AWS Utils ] 보안 그룹을 삭제합니다.");
+        deleteEC2SecGroup(ec2, secGroupId);
+
+        log.info(" [ AWS Utils ] 키 페어를 삭제합니다.");
+        deleteKeys(ec2,keyName);
+
+        log.info(" [ AWS Utils ] EC2 삭제를 완료했습니다.");
+
+    }
+
+
+
+
+
+
+
+
+
 
     private static String createKeyPair(Ec2Client ec2, String keyName) {
 
@@ -230,6 +282,43 @@ public class AWSInstanceUtils {
         return associateResponse.associationId();
 
     }
+
+    public static void disassociateAddress(Ec2Client ec2, String associationId) {
+        DisassociateAddressRequest addressRequest = DisassociateAddressRequest.builder()
+                .associationId(associationId)
+                .build();
+
+        ec2.disassociateAddress(addressRequest);
+    }
+
+    public static void releaseEC2Address(Ec2Client ec2, String allocId) {
+        ReleaseAddressRequest request = ReleaseAddressRequest.builder()
+                .allocationId(allocId)
+                .build();
+
+        ec2.releaseAddress(request);
+    }
+
+    public static void deleteEC2SecGroup(Ec2Client ec2, String groupId) {
+        DeleteSecurityGroupRequest request = DeleteSecurityGroupRequest.builder()
+                .groupId(groupId)
+                .build();
+
+        ec2.deleteSecurityGroup(request);
+    }
+
+    public static void deleteKeys(Ec2Client ec2, String keyPair) {
+        DeleteKeyPairRequest request = DeleteKeyPairRequest.builder()
+                .keyName(keyPair)
+                .build();
+
+        ec2.deleteKeyPair(request);
+    }
+
+
+
+
+
 
     private static IpPermission getIpPerm(int integer, IpRange ipAllRange) {
         return IpPermission.builder()
