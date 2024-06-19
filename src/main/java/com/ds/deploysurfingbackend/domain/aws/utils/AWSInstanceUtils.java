@@ -145,10 +145,11 @@ public class AWSInstanceUtils {
                 .build();
 
 
+        //TODO : 오류 모니터링 필요
         log.info(" [ AWS Utils ] 탄력적 IP 할당을 해제합니다. id ---> {}", instanceId);
-//        disassociateAddress(ec2, allocationId);
+        disassociateAddress(ec2, allocationId);
         log.info(" [ AWS Utils ] 탄력적 IP를 릴리즈합니다. id ---> {}", instanceId);
-//        releaseEC2Address(ec2, allocationId);
+        releaseEC2Address(ec2, allocationId);
 
 
 
