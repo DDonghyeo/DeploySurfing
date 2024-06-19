@@ -64,6 +64,7 @@ public class AWSInstanceUtils {
             log.info(" [ AWS Utils ] 새로운 보안그룹을 생성합니다. VPC ID ---> {}", vpcId);
 
             String secGroupId = createBasicSecurityGroup(ec2, SECURITY_GROUP_NAME, SECURITY_GROUP_DESC, vpcId);
+            log.info(" [ AWS Utils ] 새로운 보안그룹을 생성에 성공했습니다. Group ID ---> {}", secGroupId);
 
 
             //----------------- [ EC2 실행 ] -----------------
@@ -87,16 +88,17 @@ public class AWSInstanceUtils {
             //----------------- [ EC2 정보 ] -----------------
             String instanceIdVal = response.instances().get(0).instanceId();
             ec2.waiter().waitUntilInstanceRunning(r -> r.instanceIds(instanceIdVal));
+            log.info(" [ AWS Utils ] 인스턴스가 실행되었습니다. instance id ---> {}", instanceIdVal);
 
 
             //----------------- [ 탄력적 IP 할당 ] -----------------
             log.info(" [ AWS Utils ] 탄력적 IP를 할당합니다.");
             //탄력적 IP 할당
             String allocationId = allocateAddress(ec2);
-            log.info(" [ AWS Utils ] 탄력적 IP를 할당에 성공했습니다. ---> {}", allocationId);
+            log.info(" [ AWS Utils ] 탄력적 IP를 할당에 성공했습니다. ---> allocation ID {}", allocationId);
             //탄력적 IP 연결
             String associationId = associateAddress(ec2, instanceIdVal, allocationId);
-            log.info(" [ AWS Utils ] 탄력적 IP 연결에 성공했습니다. ---> {}", associationId);
+            log.info(" [ AWS Utils ] 탄력적 IP 연결에 성공했습니다. ---> association ID {}", associationId);
 
 
             log.info("[ AWSInstanceUtils ] : EC2 생성에 성공했습니다. ---> {}", instanceIdVal);
@@ -144,9 +146,9 @@ public class AWSInstanceUtils {
 
 
         log.info(" [ AWS Utils ] 탄력적 IP 할당을 해제합니다. id ---> {}", instanceId);
-        disassociateAddress(ec2, allocationId);
+//        disassociateAddress(ec2, allocationId);
         log.info(" [ AWS Utils ] 탄력적 IP를 릴리즈합니다. id ---> {}", instanceId);
-        releaseEC2Address(ec2, allocationId);
+//        releaseEC2Address(ec2, allocationId);
 
 
 
