@@ -15,30 +15,35 @@ public class AppController {
 
     private final AppService appService;
 
+    @Operation(tags = "app", summary = "앱 생성", description = "앱을 생성합니다.")
     @PostMapping("/create")
     public ResponseEntity<?> createApp(@RequestBody @Valid AppDto.createAppDto createAppDto) {
 
         return ResponseEntity.ok(appService.createApp(createAppDto));
     }
 
+    @Operation(tags = "app", summary = "앱 전체 조회", description = "사용자가 보유한 앱을 모두 조회합니다.")
     @GetMapping("/list")
     public ResponseEntity<?> getAppList() {
 
         return ResponseEntity.ok(appService.getAppList());
     }
 
+    @Operation(tags = "app", summary = "앱 조회", description = "앱을 조회합니다.")
     @GetMapping("")
     public ResponseEntity<?> getApp(@RequestParam("appId") String appId) {
 
         return ResponseEntity.ok(appService.getApp(appId));
     }
 
+    @Operation(tags = "app", summary = "앱 삭제", description = "앱을 삭제합니다.")
     @DeleteMapping("")
     public ResponseEntity<?> deleteApp(@RequestParam("appId") String appId) {
 
         return ResponseEntity.ok(appService.deleteApp(appId));
     }
 
+    @Operation(tags = "app", summary = "앱 수정", description = "앱을 수정합니다. 이름 또는 설명을 바꿉니다. EC2의 이름이 바뀌지는 않습니다. ")
     @PutMapping("/update")
     public ResponseEntity<?> updateApp(@RequestParam("appId") String appId,
                                        @RequestBody AppDto.updateAppDto updateAppDto ) {
