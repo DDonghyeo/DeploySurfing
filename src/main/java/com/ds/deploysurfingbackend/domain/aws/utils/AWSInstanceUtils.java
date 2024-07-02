@@ -175,13 +175,6 @@ public class AWSInstanceUtils {
 
 
 
-
-
-
-
-
-
-
     private static String createKeyPair(Ec2Client ec2, String keyName) {
 
         CreateKeyPairRequest request = CreateKeyPairRequest.builder()
