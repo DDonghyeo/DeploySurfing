@@ -1,7 +1,7 @@
-package com.ds.deploysurfingbackend.domain.app.domain;
+package com.ds.deploysurfingbackend.domain.app.entity;
 
-import com.ds.deploysurfingbackend.domain.app.domain.type.AppStatus;
-import com.ds.deploysurfingbackend.domain.app.domain.type.AppType;
+import com.ds.deploysurfingbackend.domain.app.entity.type.AppStatus;
+import com.ds.deploysurfingbackend.domain.app.entity.type.AppType;
 import com.ds.deploysurfingbackend.domain.app.dto.AppDto;
 import jakarta.persistence.*;
 import lombok.*;
@@ -37,9 +37,12 @@ public class App extends BaseTimeEntity {
     private Long userId;
 
     // ------------ GitHub 관련 내용 -------------
+    @Column(name = "repoUrl", nullable = false)
     private String repoUrl;
+    @Column(name = "owner", nullable = false)
     private String owner;
 
+    @Column(name = "repoName", nullable = false)
     private String repoName;
 
     private String repoPublicKeyId;
@@ -48,9 +51,7 @@ public class App extends BaseTimeEntity {
 
     //------------------------------------------
 
-
-
-    private boolean isConfig;
+    private boolean isInit;
 
     public void setRepoPublicKeyId(String repoPublicKeyId) {
         this.repoPublicKeyId = repoPublicKeyId;
@@ -67,5 +68,9 @@ public class App extends BaseTimeEntity {
     public void update(AppDto.updateAppDto updateAppDto) {
         name = updateAppDto.getName();
         description = updateAppDto.getDescription();
+    }
+
+    public void setInit(boolean init) {
+        isInit = init;
     }
 }

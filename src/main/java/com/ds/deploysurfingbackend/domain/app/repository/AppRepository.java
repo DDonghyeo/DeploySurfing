@@ -1,6 +1,6 @@
 package com.ds.deploysurfingbackend.domain.app.repository;
 
-import com.ds.deploysurfingbackend.domain.app.domain.App;
+import com.ds.deploysurfingbackend.domain.app.entity.App;
 import com.ds.deploysurfingbackend.global.exception.CustomException;
 import com.ds.deploysurfingbackend.global.exception.ErrorCode;
 import jakarta.persistence.EntityExistsException;

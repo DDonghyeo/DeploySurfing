@@ -1,8 +1,8 @@
 package com.ds.deploysurfingbackend.domain.app.dto;
 
-import com.ds.deploysurfingbackend.domain.app.domain.App;
-import com.ds.deploysurfingbackend.domain.app.domain.type.AppStatus;
-import com.ds.deploysurfingbackend.domain.app.domain.type.AppType;
+import com.ds.deploysurfingbackend.domain.app.entity.App;
+import com.ds.deploysurfingbackend.domain.app.entity.type.AppStatus;
+import com.ds.deploysurfingbackend.domain.app.entity.type.AppType;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -14,21 +14,20 @@ import java.util.regex.Pattern;
 public class AppDto {
 
     @Getter
-    public static class createAppDto {
+    public record createAppDto(
+            @NotBlank(message = "[ERROR] 이름은 필수입니다.")
+            String name,
 
-        @NotBlank(message = "[ERROR] 이름은 필수입니다.")
-        public String name;
+            AppType type,
 
-        public AppType type;
+            @NotBlank(message = "[ERROR] GitHub URL은 필수입니다.")
+            String gitHubUrl,
 
-        @NotBlank(message = "[ERROR] GitHub URL은 필수입니다.")
-        public String gitHubUrl;
+            @NotBlank(message = "[ERROR] yml은 필수입니다.")
+            String yml,
 
-        @NotBlank(message = "[ERROR] yml은 필수입니다.")
-        public String ymlUrl;
-
-        public Long userId;
-
+            Long userId
+    ) {
         public App toEntity() {
             String url = gitHubUrl;
             Pattern pattern = Pattern.compile("https://github.com/(\\w+)/(\\w+)");
@@ -54,7 +53,7 @@ public class AppDto {
                     .owner(owner)
                     .repoName(repoName)
                     .type(type==AppType.SPRING? AppType.SPRING : AppType.DJANGO)
-                    .status(AppStatus.TERMINATED) // 초기는 종료 상태
+                    .status(AppStatus.STARTING) // 초기는 종료 상태
                     .userId(userId)
                     .build();
         }
@@ -62,11 +61,10 @@ public class AppDto {
     }
 
     @Getter
-    public static class updateAppDto {
+    public record updateAppDto(
+            String name,
 
-        public String name;
-
-        public String description;
-    }
+            String description
+    ) {}
 
 }

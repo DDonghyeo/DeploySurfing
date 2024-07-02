@@ -2,6 +2,7 @@ package com.ds.deploysurfingbackend.domain.app.api;
 
 import com.ds.deploysurfingbackend.domain.app.dto.AppDto;
 import com.ds.deploysurfingbackend.domain.app.service.AppService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -45,5 +46,12 @@ public class AppController {
         return ResponseEntity.ok(appService.updateApp(appId, updateAppDto));
     }
 
+    @Operation(tags = "app", summary = "앱 초기화", description = "앱 생성 직후 시작되는 로직입니다. 앱을 초기화합니다.")
+    @GetMapping("/init")
+    public ResponseEntity<?> initApp(@RequestParam("appId") String appId) {
+
+        appService.initialConfiguration(appId);
+        return ResponseEntity.ok("앱 초기화 완료");
+    }
 
 }

@@ -1,19 +1,25 @@
 package com.ds.deploysurfingbackend.domain.app.service;
 
-import com.ds.deploysurfingbackend.domain.app.domain.App;
+import com.ds.deploysurfingbackend.domain.app.entity.App;
+import com.ds.deploysurfingbackend.domain.aws.utils.AWSInstanceUtils;
+import com.ds.deploysurfingbackend.domain.aws.utils.AWSStsUtil;
 import com.ds.deploysurfingbackend.domain.user.domain.User;
 import com.ds.deploysurfingbackend.domain.app.dto.AppDto;
 import com.ds.deploysurfingbackend.domain.app.dto.GitHubPublicKeyDto;
 import com.ds.deploysurfingbackend.domain.app.repository.AppJpaRepository;
 import com.ds.deploysurfingbackend.domain.user.repository.UserRepository;
-import com.ds.deploysurfingbackend.global.utils.GitHubUtils;
+import com.ds.deploysurfingbackend.domain.github.utils.GitHubUtils;
+import com.ds.deploysurfingbackend.global.exception.CustomException;
+import com.ds.deploysurfingbackend.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class AppService {
@@ -68,21 +74,27 @@ public class AppService {
 
     //앱 초기설정하기
     public void initialConfiguration(String appId) {
+        log.info("[ App Service ] 앱 초기 설정을 시작합니다. ---> {}", appId);
         App app = appRepository.findById(appId).orElseThrow();
+        //TODO : User 정보 매핑
+        User user = userRepository.findById(0L).orElseThrow();
 
-        if (!app.isConfig()) {
+        if (!app.isInit()) {
             //이미 초기 설정 되어있을 경우
-            throw new RuntimeException();
+            log.warn("[ App Service ] 이미 초기 설정이 실행된 앱입니다. ---> {}", appId);
+            throw new CustomException(ErrorCode.APP_ALREADY_INITIALIZED);
         }
 
-        /**
-         * AWS EC2 만들기
-         */
-        //1. EC2 생성하기
 
-        //2. Public IP 연결하기
-
-        //3.
+        //1. EC2 생성
+        AWSInstanceUtils.createFreeTierEC2(
+                app.getName(),
+                AWSStsUtil.assumeRole(
+                        user.getAwsRoleArn(),
+                        "ds_initialize",
+                        user.getAwsAccessKey(), user.getAwsSecretKey()
+                )
+        );
 
         /**
          * GitHub 구성하기
@@ -106,5 +118,8 @@ public class AppService {
         //4. 브랜치에 .github/workflows 디렉토리 생성하기
 
         //5. .github/workflows 디렉토리에 deploy.yml 생성하기
+
+        //앱 초기설정 완료
+        app.setInit(true);
     }
 }
