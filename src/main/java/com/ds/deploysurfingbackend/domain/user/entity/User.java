@@ -1,6 +1,6 @@
-package com.ds.deploysurfingbackend.domain.user.domain;
+package com.ds.deploysurfingbackend.domain.user.entity;
 
-import com.ds.deploysurfingbackend.domain.app.domain.BaseTimeEntity;
+import com.ds.deploysurfingbackend.domain.app.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -18,7 +18,17 @@ public class User extends BaseTimeEntity {
 
     private String name;
 
+    private String email;
+
+    private String password;
+
+    private String awsRoleArn;
+
+    private String awsAccessKey;
+
+    private String awsSecretKey;
+
     private String dockerToken;
-    private String awsToken;
+
     private String gitHubToken;
 }

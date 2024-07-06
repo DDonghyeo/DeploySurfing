@@ -35,7 +35,14 @@ public enum ErrorCode {
     DUPLICATE_RESOURCE(CONFLICT, 409, "데이터가 이미 존재합니다"),
 
     //500 INTERNAL SERVER ERROR
-    SERVER_ERROR(INTERNAL_SERVER_ERROR, 500, "서버 에러입니다.");
+    SERVER_ERROR(INTERNAL_SERVER_ERROR, 500, "서버 에러입니다."),
+
+    // App 관련 에러
+    APP_ALREADY_INITIALIZED(INTERNAL_SERVER_ERROR, 501, "이미 초기화 된 앱입니다."),
+
+    //AWS 관련 에러
+    VPC_NOT_FOUND(INTERNAL_SERVER_ERROR, 500, "VPC가 존재하지 않습니다."),
+    DUPLICATE_KEY_NAME(INTERNAL_SERVER_ERROR, 500, "이미 존재하는 키 페어 이름입니다.");
 
 
     private final HttpStatus httpStatus;

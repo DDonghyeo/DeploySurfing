@@ -1,4 +1,4 @@
-package com.ds.deploysurfingbackend.domain.app.domain;
+package com.ds.deploysurfingbackend.domain.app.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
