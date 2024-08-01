@@ -1,12 +1,14 @@
 package com.ds.deploysurfingbackend.domain.aws.utils;
 
-import com.ds.deploysurfingbackend.domain.aws.domain.Ec2;
+import com.ds.deploysurfingbackend.domain.aws.entity.EC2;
 import com.ds.deploysurfingbackend.domain.aws.type.EC2AMI;
 import com.ds.deploysurfingbackend.global.exception.CustomException;
 import com.ds.deploysurfingbackend.global.exception.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.awscore.exception.AwsServiceException;
+import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.*;
@@ -25,8 +27,7 @@ public class AWSInstanceUtils {
     private static final String SECURITY_GROUP_NAME = "deploySurfing_Security_Group";
     private static final String SECURITY_GROUP_DESC = "Created By DeploySurfing";
 
-
-    public static Ec2 createFreeTierEC2(String name,
+    public static EC2 createFreeTierEC2(String name,
                                         StaticCredentialsProvider staticCredentialsProvider) {
 
         log.info(" [ AWS Utils ] 새로운 EC2를 생성합니다. 이름 ---> {}", name);
@@ -42,11 +43,11 @@ public class AWSInstanceUtils {
         try {
             //----------------- [ 키 페어 생성 ] -----------------
             log.info(" [ AWS Utils ] 새로운 키 페어를 생성합니다. 이름 ---> {}", name);
+            //중복되는 키가 있는지 확인
             checkDuplicateKeyName(ec2, name);
             String keyFileContent = createKeyPair(ec2, name);
 
             //키 리소스 저장
-
             Path keyFilePath = Paths.get(keyFilePathStr);
             Files.write(keyFilePath, keyFileContent.getBytes());
             log.info(" [ AWS Utils ] 키 페어 생성에 성공했습니다. 내용 ---> {}", keyFileContent);
@@ -101,31 +102,63 @@ public class AWSInstanceUtils {
             log.info(" [ AWS Utils ] 탄력적 IP 연결에 성공했습니다. ---> association ID {}", associationId);
 
 
-            log.info("[ AWSInstanceUtils ] : EC2 생성에 성공했습니다. ---> {}", instanceIdVal);
+            log.info("[ AWS Utils ] : EC2 생성에 성공했습니다. ---> {}", instanceIdVal);
 
             describeEC2Instances(ec2, instanceIdVal);
 
 
             ec2.close();
 
-            return Ec2.builder()
+            return EC2.builder()
                     .id(instanceIdVal)
                     .instanceType(InstanceType.T2_MICRO)
                     .securityGroupName(SECURITY_GROUP_NAME)
                     .vpcId(vpcId)
                     .keyFilePath(keyFilePathStr)
                     .associationId(associationId)
-                    .secGroupId(secGroupId)
+                    .securityGroupId(secGroupId)
                     .build();
 
-        } catch (Ec2Exception e) {
+        } catch (AwsServiceException | SdkClientException e) {
             ec2.close();
             //EC2 생성 실패
-            log.error(e.awsErrorDetails().errorMessage());
-            throw new RuntimeException();
+            if (e instanceof Ec2Exception) {
+                log.error(((Ec2Exception) e).awsErrorDetails().errorMessage());
+            }
+            throw new CustomException(ErrorCode.SERVER_ERROR, e.getMessage());
+
         } catch (IOException e) {
             log.error("IO Exception : 파일 쓰기에 실패했습니다.");
             throw new RuntimeException(e);
+        }
+    }
+
+    public static void pauseEC2(StaticCredentialsProvider staticCredentialsProvider,
+                                String instanceId) {
+
+        Region region = Region.AP_NORTHEAST_2; // 서울 REGION
+        Ec2Client ec2 = Ec2Client.builder()
+                .credentialsProvider(staticCredentialsProvider)
+                .region(region)
+                .build();
+
+        try {
+            StopInstancesRequest stopInstancesRequest = StopInstancesRequest.builder()
+                    .instanceIds(instanceId)
+                    .build();
+
+            StopInstancesResponse response = ec2.stopInstances(stopInstancesRequest);
+
+            ec2.close();
+
+            if (response.hasStoppingInstances()) {
+                log.info(" [ AWS Utils ]  인스턴스 중지에 성공했습니다.");
+            } else log.error(" [ AWS Utils ]  인스턴스 중지에 실패했습니다.");
+
+        } catch (AwsServiceException | SdkClientException e){
+            ec2.close();
+            log.error(" [ AWS Utils ]  인스턴스 중지에 실패했습니다. : {}", e.getMessage());
+            throw new CustomException(ErrorCode.SERVER_ERROR, e.getMessage());
         }
     }
 
@@ -144,36 +177,40 @@ public class AWSInstanceUtils {
                 .region(region)
                 .build();
 
-
-        //TODO : 오류 모니터링 필요
-        log.info(" [ AWS Utils ] 탄력적 IP 할당을 해제합니다. id ---> {}", instanceId);
-        disassociateAddress(ec2, allocationId);
-        log.info(" [ AWS Utils ] 탄력적 IP를 릴리즈합니다. id ---> {}", instanceId);
-        releaseEC2Address(ec2, allocationId);
-
+        try {
+            log.info(" [ AWS Utils ] 탄력적 IP 할당을 해제합니다. id ---> {}", instanceId);
+            disassociateAddress(ec2, allocationId);
+            log.info(" [ AWS Utils ] 탄력적 IP를 릴리즈합니다. id ---> {}", instanceId);
+            releaseEC2Address(ec2, allocationId);
 
 
-        //인스턴스 종료까지 기다리기 위해 Waiter 사용
-        log.info(" [ AWS Utils ] 인스턴스가 종료될 때 까지 대기합니다..");
-        TerminateInstancesRequest ti = TerminateInstancesRequest.builder()
-                .instanceIds(instanceId)
-                .build();
-        ec2.terminateInstances(ti);
-        ec2.waiter().waitUntilInstanceTerminated(r -> r.instanceIds(instanceId));
-        log.info(" [ AWS Utils ] 인스턴스 종료에 성공했습니다.");
+            //인스턴스 종료까지 기다리기 위해 Waiter 사용
+            log.info(" [ AWS Utils ] 인스턴스가 종료될 때 까지 대기합니다..");
+            TerminateInstancesRequest ti = TerminateInstancesRequest.builder()
+                    .instanceIds(instanceId)
+                    .build();
+            ec2.terminateInstances(ti);
+            ec2.waiter().waitUntilInstanceTerminated(r -> r.instanceIds(instanceId));
+            log.info(" [ AWS Utils ] 인스턴스 종료에 성공했습니다.");
 
 
-        log.info(" [ AWS Utils ] 보안 그룹을 삭제합니다.");
-        deleteEC2SecGroup(ec2, secGroupId);
+            log.info(" [ AWS Utils ] 보안 그룹을 삭제합니다.");
+            deleteEC2SecGroup(ec2, secGroupId);
 
-        log.info(" [ AWS Utils ] 키 페어를 삭제합니다.");
-        deleteKeys(ec2,keyName);
+            log.info(" [ AWS Utils ] 키 페어를 삭제합니다.");
+            deleteKeys(ec2, keyName);
 
-        log.info(" [ AWS Utils ] EC2 삭제를 완료했습니다.");
+            log.info(" [ AWS Utils ] EC2 삭제를 완료했습니다.");
+            ec2.close();
 
+        } catch (AwsServiceException | SdkClientException e) {
+            log.info(" [ AWS Utils ] EC2 삭제에 실패했습니다 : {}", e.getMessage());
+            throw new CustomException(ErrorCode.SERVER_ERROR, e.getMessage());
+        }
     }
 
 
+    //  ---- private method ----
 
     private static String createKeyPair(Ec2Client ec2, String keyName) {
 
@@ -310,9 +347,6 @@ public class AWSInstanceUtils {
 
         ec2.deleteKeyPair(request);
     }
-
-
-
 
 
 

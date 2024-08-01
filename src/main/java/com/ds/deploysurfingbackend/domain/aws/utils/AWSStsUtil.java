@@ -14,8 +14,7 @@ import software.amazon.awssdk.services.sts.model.StsException;
 @Slf4j
 public class AWSStsUtil {
 
-    // The AWS IAM Identity Center identity (user) who executes this method does not have permission to list buckets.
-    // The identity is configured in the [default] profile.
+    //Role
     public static StaticCredentialsProvider assumeRole(String roleArn, String roleSessionName, String accessKey, String secAccessKey) {
         AwsBasicCredentials awsCreds = AwsBasicCredentials.create(
                 accessKey, secAccessKey);
