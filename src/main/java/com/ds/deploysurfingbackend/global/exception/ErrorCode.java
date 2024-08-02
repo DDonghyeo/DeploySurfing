@@ -27,6 +27,7 @@ public enum ErrorCode {
 
 
     /* 404 NOT_FOUND : Resource 를 찾을 수 없음 */
+    EC2_NOT_FOUND(NOT_FOUND, 404, "해당 EC2를 찾을 수 없습니다"),
     USER_NOT_FOUND(NOT_FOUND, 404, "해당 유저 정보를 찾을 수 없습니다"),
     REFRESH_TOKEN_NOT_FOUND(NOT_FOUND, 404, "로그아웃 된 사용자입니다"),
 
