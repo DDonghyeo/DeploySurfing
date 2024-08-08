@@ -24,6 +24,8 @@ public class User extends BaseTimeEntity {
 
     private String password;
 
+    private String roles;
+
     private UserStatus status;
 
     private String awsRoleArn;

@@ -8,7 +8,9 @@ import com.ds.deploysurfingbackend.domain.user.repository.UserRepository;
 import com.ds.deploysurfingbackend.global.exception.CustomException;
 import com.ds.deploysurfingbackend.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service
@@ -16,17 +18,19 @@ public class UserService {
 
     private final UserRepository userRepository;
 
+    private final PasswordEncoder passwordEncoder;
+
+    @Transactional
     public void signup(UserRequest.SignUpDto signUpDto) {
 
-        userRepository.save(User.builder()
-                        .name(signUpDto.name())
-                        .email(signUpDto.email())
-                        //TODO : 패스워드 암호화
-                        .password(signUpDto.password())
-                .status(UserStatus.ACTIVE)
-                .build()
-        );
+        String email = signUpDto.email();
+        if (userRepository.existsByEmail(email)) {
+            throw new CustomException(ErrorCode.USER_ALREADY_REGISTERED);
+        }
+        userRepository.save(signUpDto.toEntity(passwordEncoder));
     }
+
+    @Transactional(readOnly = true)
     public UserResponseDto getUser(String email) {
         return UserResponseDto.from(
                 userRepository.findByEmail(email).orElseThrow(
@@ -34,12 +38,14 @@ public class UserService {
         );
     }
 
+    @Transactional
     public void updateUser(String email, UserRequest.UpdateDto updateDto) {
         User user = userRepository.findByEmail(email).orElseThrow(
                 () -> new CustomException(ErrorCode.USER_NOT_FOUND));
         user.update(updateDto);
     }
 
+    @Transactional
     public void deleteUser(String email) {
         User user = userRepository.findByEmail(email).orElseThrow(
                 () -> new CustomException(ErrorCode.USER_NOT_FOUND));
