@@ -1,16 +1,20 @@
 package com.ds.deploysurfingbackend.global.config;
 
 import com.ds.deploysurfingbackend.global.filter.CustomLoginFilter;
+import com.ds.deploysurfingbackend.global.filter.CustomLogoutHandler;
 import com.ds.deploysurfingbackend.global.filter.JwtAuthorizationFilter;
+import com.ds.deploysurfingbackend.global.utils.HttpResponseUtil;
 import com.ds.deploysurfingbackend.global.utils.JwtUtil;
 import com.ds.deploysurfingbackend.global.utils.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -32,7 +36,6 @@ public class SecurityConfig {
             "/login", //로그인은 인증이 필요하지 않음
             "/user/create", //회원가입은 인증이 필요하지 않음
             "/auth/reissue", //토큰 재발급은 인증이 필요하지 않음
-            "/health",
             "api/usage",
             "/swagger-ui/**", //swagger 관련 URL
             "/v3/api-docs/**"

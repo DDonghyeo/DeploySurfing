@@ -31,8 +31,8 @@ dependencies {
 
     runtimeOnly 'com.mysql:mysql-connector-j'
 
-//    implementation 'org.springframework.boot:spring-boot-starter-security'
-//    testImplementation 'org.springframework.security:spring-security-test'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    testImplementation 'org.springframework.security:spring-security-test'
 
     //Validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
@@ -45,6 +45,29 @@ dependencies {
 
     //Swagger
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.4'
+
+    //AWS SDK
+    implementation platform('software.amazon.awssdk:bom:2.21.20')
+    implementation 'software.amazon.awssdk:ec2'
+    implementation 'software.amazon.awssdk:sts'
+
+    //Test
+    testImplementation 'org.junit.jupiter:junit-jupiter-api'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+
+    testImplementation 'io.projectreactor:reactor-test'
+
+    // jwt
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
+    implementation 'io.jsonwebtoken:jjwt-impl:0.12.3'
+    implementation 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+
+    //Redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+
 }
 
 tasks.named('test') {
