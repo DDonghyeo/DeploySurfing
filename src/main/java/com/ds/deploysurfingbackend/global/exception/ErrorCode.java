@@ -24,6 +24,7 @@ public enum ErrorCode {
     /* 401 UNAUTHORIZED : 인증되지 않은 사용자 */
     INVALID_AUTH_TOKEN(UNAUTHORIZED, 401, "권한 정보가 없는 토큰입니다"),
     UNAUTHORIZED_MEMBER(UNAUTHORIZED, 401, "현재 내 계정 정보가 존재하지 않습니다"),
+    TOKEN_EXPIRED(UNAUTHORIZED, 401, "엑세스 토큰이 만료되었습니다."),
 
 
     /* 404 NOT_FOUND : Resource 를 찾을 수 없음 */
@@ -43,7 +44,10 @@ public enum ErrorCode {
 
     //AWS 관련 에러
     VPC_NOT_FOUND(INTERNAL_SERVER_ERROR, 500, "VPC가 존재하지 않습니다."),
-    DUPLICATE_KEY_NAME(INTERNAL_SERVER_ERROR, 500, "이미 존재하는 키 페어 이름입니다.");
+    DUPLICATE_KEY_NAME(INTERNAL_SERVER_ERROR, 500, "이미 존재하는 키 페어 이름입니다."),
+
+    ///사용자 관련 에러
+    USER_ALREADY_REGISTERED(CONFLICT, 409, "이미 존재하는 사용자입니다.");
 
 
     private final HttpStatus httpStatus;

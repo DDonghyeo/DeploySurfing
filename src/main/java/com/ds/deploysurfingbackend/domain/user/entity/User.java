@@ -14,7 +14,6 @@ import java.util.List;
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @RequiredArgsConstructor
-//@NoArgsConstructor
 @Entity
 @Table(name = "user")
 public class User extends BaseTimeEntity {
@@ -32,14 +31,19 @@ public class User extends BaseTimeEntity {
 
     private UserStatus status;
 
+    @JsonIgnore
     private String awsRoleArn;
 
+    @JsonIgnore
     private String awsAccessKey;
 
+    @JsonIgnore
     private String awsSecretKey;
 
+    @JsonIgnore
     private String dockerToken;
 
+    @JsonIgnore
     private String gitHubToken;
 
     private List<Role> roles;
@@ -55,9 +59,5 @@ public class User extends BaseTimeEntity {
 
     public void setStatus(UserStatus status) {
         this.status = status;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 }
