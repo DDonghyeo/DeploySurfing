@@ -12,6 +12,7 @@ import com.ds.deploysurfingbackend.domain.user.repository.UserRepository;
 import com.ds.deploysurfingbackend.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 
@@ -24,6 +25,7 @@ public class AWSService {
     private final UserRepository userRepository;
 
     //새로운 EC2 생성
+    @Async
     public void createEC2(AuthUser authUser, String name) {
 
         User user = userRepository.findByEmail(authUser.getEmail()).orElseThrow(
@@ -46,8 +48,8 @@ public class AWSService {
 
         AWSInstanceUtils.pauseEC2(role, ec2Id);
     }
-    //EC2 종료 (삭제)
 
+    //EC2 종료 (삭제)
     public void terminateEC2(AuthUser authUser, String ec2Id) {
 
         User user = userRepository.findByEmail(authUser.getEmail()).orElseThrow(
