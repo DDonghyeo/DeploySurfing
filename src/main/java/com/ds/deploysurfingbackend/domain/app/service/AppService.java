@@ -1,21 +1,20 @@
 package com.ds.deploysurfingbackend.domain.app.service;
 
 import com.ds.deploysurfingbackend.domain.app.entity.App;
-import com.ds.deploysurfingbackend.domain.aws.utils.AWSInstanceUtils;
-import com.ds.deploysurfingbackend.domain.aws.utils.AWSStsUtil;
-import com.ds.deploysurfingbackend.domain.user.domain.User;
+import com.ds.deploysurfingbackend.domain.app.exception.AppErrorCode;
+import com.ds.deploysurfingbackend.domain.aws.service.AWSService;
+import com.ds.deploysurfingbackend.domain.user.auth.AuthUser;
+import com.ds.deploysurfingbackend.domain.user.entity.User;
 import com.ds.deploysurfingbackend.domain.app.dto.AppDto;
-import com.ds.deploysurfingbackend.domain.app.dto.GitHubPublicKeyDto;
-import com.ds.deploysurfingbackend.domain.app.repository.AppJpaRepository;
+import com.ds.deploysurfingbackend.domain.app.repository.AppRepository;
+import com.ds.deploysurfingbackend.domain.user.exception.UserErrorCode;
 import com.ds.deploysurfingbackend.domain.user.repository.UserRepository;
-import com.ds.deploysurfingbackend.domain.github.utils.GitHubUtils;
+import com.ds.deploysurfingbackend.global.exception.CommonErrorCode;
 import com.ds.deploysurfingbackend.global.exception.CustomException;
-import com.ds.deploysurfingbackend.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -24,77 +23,92 @@ import java.util.List;
 @Service
 public class AppService {
 
-    private final AppJpaRepository appRepository;
-
+    private final AppRepository appRepository;
     private final UserRepository userRepository;
+    private final AWSService awsService;
 
     //앱 생성
-    public ResponseEntity<?> createApp(AppDto.createAppDto createAppDto) {
-        App app = createAppDto.toEntity();
+    @Transactional
+    public void createApp(AuthUser authUser, AppDto.CreateAppDto createAppDto) {
 
-        Long userId = createAppDto.getUserId();
+        User user = userRepository.findByEmail(authUser.getEmail()).orElseThrow(
+                () -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-        User user = userRepository.findById(userId).orElseThrow();
+        App app = createAppDto.toEntity(user);
+
         //repo Settings
-        GitHubPublicKeyDto publicKeyDto = GitHubUtils.getRepositoryPublicKey(app, user.getGitHubToken());
-        app.setRepoPublicKeyId(publicKeyDto.getKey_id());
-        app.setRepoPublicKey(publicKeyDto.getKey());
-
+//        GitHubPublicKeyDto publicKeyDto = GitHubUtils.getRepositoryPublicKey(app, user.getGitHubToken());
+//        app.setRepoPublicKeyId(publicKeyDto.getKey_id());
+//        app.setRepoPublicKey(publicKeyDto.getKey());
 
         appRepository.save(app);
-        return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     //앱 삭제
-    public ResponseEntity<?> deleteApp(String appId) {
-        //TODO : 삭제할 수 있는 권한이 있는지?
+    @Transactional
+    public void deleteAppAndTerminateEC2(AuthUser authUser, String appId) {
+
+        App app = appRepository.findById(appId).orElseThrow(
+                () -> new CustomException(AppErrorCode.APP_NOT_FOUND)
+        );
+        //삭제할 수 있는 권한 있는지 확인
+        checkAppAccessPermission(authUser.getEmail(), app);
+
         appRepository.deleteById(appId);
-        return new ResponseEntity<>(HttpStatus.OK);
+
+        awsService.terminateEC2(authUser, app.getEc2().getEc2Id());
     }
 
     //앱 가져오기
-    public ResponseEntity<App> getApp(String appId) {
-        return ResponseEntity.ok(appRepository.findById(appId).orElseThrow());
+    @Transactional(readOnly = true)
+    public AppDto.AppResponseDto getApp(AuthUser authUser, String appId) {
+
+        App app = appRepository.findById(appId).orElseThrow(
+                () -> new CustomException(AppErrorCode.APP_NOT_FOUND));
+
+        checkAppAccessPermission(authUser.getEmail(), app);
+
+        return AppDto.AppResponseDto.from(app);
     }
 
     //앱 리스트 가져오기
-    public ResponseEntity<List<App>> getAppList() {
-        //TODO : User ID
-        Long userId = 1L;
-        return ResponseEntity.ok(appRepository.findAllByUserId(userId));
+    @Transactional
+    public List<AppDto.AppResponseDto> getAppList(AuthUser authUser) {
+        return appRepository.findAllByUserId(authUser.getId())
+                        .stream()
+                        .map(AppDto.AppResponseDto::from)
+                        .toList();
     }
 
     //앱 업데이트
-    public ResponseEntity<?> updateApp(String appId, AppDto.updateAppDto updateAppDto) {
-        App app = appRepository.findById(appId).orElseThrow();
+    @Transactional
+    public void updateApp(AuthUser authUser, String appId, AppDto.UpdateAppDto updateAppDto) {
+
+        App app = appRepository.findById(appId).orElseThrow(
+                () -> new CustomException(AppErrorCode.APP_NOT_FOUND));
+
+        checkAppAccessPermission(authUser.getEmail(), app);
+
         app.update(updateAppDto);
-        return new ResponseEntity<>(HttpStatus.OK);
     }
 
 
-    //앱 초기설정하기
-    public void initialConfiguration(String appId) {
+    //앱 초기 설정
+    @Transactional
+    public void initialConfiguration(AuthUser authUser, String appId) {
+
         log.info("[ App Service ] 앱 초기 설정을 시작합니다. ---> {}", appId);
-        App app = appRepository.findById(appId).orElseThrow();
-        //TODO : User 정보 매핑
-        User user = userRepository.findById(0L).orElseThrow();
+        App app = appRepository.findById(appId).orElseThrow(
+                () -> new CustomException(AppErrorCode.APP_NOT_FOUND));
 
-        if (!app.isInit()) {
-            //이미 초기 설정 되어있을 경우
-            log.warn("[ App Service ] 이미 초기 설정이 실행된 앱입니다. ---> {}", appId);
-            throw new CustomException(ErrorCode.APP_ALREADY_INITIALIZED);
-        }
+        User user = userRepository.findByEmail(authUser.getEmail()).orElseThrow(
+                () -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
+        checkAppInitialized(app);
+        checkAppAccessPermission(user.getEmail(), app);
 
         //1. EC2 생성
-        AWSInstanceUtils.createFreeTierEC2(
-                app.getName(),
-                AWSStsUtil.assumeRole(
-                        user.getAwsRoleArn(),
-                        "ds_initialize",
-                        user.getAwsAccessKey(), user.getAwsSecretKey()
-                )
-        );
+        awsService.createEC2(authUser, app.getName());
 
         /**
          * GitHub 구성하기
@@ -121,5 +135,18 @@ public class AppService {
 
         //앱 초기설정 완료
         app.setInit(true);
+    }
+
+    private void checkAppAccessPermission(String email, App app) {
+        if (!app.getUser().getEmail().equals(email))
+            throw new CustomException(CommonErrorCode.NO_AUTHORIZED);
+    }
+
+    private void checkAppInitialized(App app) {
+        if (!app.isInit()) {
+            //이미 초기 설정 되어있을 경우
+            log.warn("[ App Service ] 이미 초기 설정이 실행된 앱입니다. ---> {}", app.getId());
+            throw new CustomException(AppErrorCode.APP_ALREADY_INITIALIZED);
+        }
     }
 }

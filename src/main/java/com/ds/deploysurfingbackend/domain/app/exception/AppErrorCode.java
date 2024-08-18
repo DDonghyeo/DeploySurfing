@@ -13,6 +13,7 @@ import static org.springframework.http.HttpStatus.*;
 public enum AppErrorCode implements ErrorCode {
 
     // App 관련 에러
+    APP_NOT_FOUND(NOT_FOUND, "APP_404", "앱을 찾을 수 없습니다."),
     APP_ALREADY_INITIALIZED(INTERNAL_SERVER_ERROR, "APP_501", "이미 초기화 된 앱입니다.");
 
     private final HttpStatus httpStatus;

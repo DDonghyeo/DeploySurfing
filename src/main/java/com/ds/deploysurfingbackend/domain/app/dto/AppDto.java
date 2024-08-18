@@ -3,8 +3,9 @@ package com.ds.deploysurfingbackend.domain.app.dto;
 import com.ds.deploysurfingbackend.domain.app.entity.App;
 import com.ds.deploysurfingbackend.domain.app.entity.type.AppStatus;
 import com.ds.deploysurfingbackend.domain.app.entity.type.AppType;
+import com.ds.deploysurfingbackend.domain.user.entity.User;
 import jakarta.validation.constraints.NotBlank;
-import lombok.Getter;
+import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.regex.Matcher;
@@ -13,8 +14,7 @@ import java.util.regex.Pattern;
 @Slf4j
 public class AppDto {
 
-    @Getter
-    public record createAppDto(
+    public record CreateAppDto(
             @NotBlank(message = "[ERROR] 이름은 필수입니다.")
             String name,
 
@@ -24,11 +24,10 @@ public class AppDto {
             String gitHubUrl,
 
             @NotBlank(message = "[ERROR] yml은 필수입니다.")
-            String yml,
+            String yml
 
-            Long userId
     ) {
-        public App toEntity() {
+        public App toEntity(User user) {
             String url = gitHubUrl;
             Pattern pattern = Pattern.compile("https://github.com/(\\w+)/(\\w+)");
             Matcher matcher = pattern.matcher(url);
@@ -54,17 +53,48 @@ public class AppDto {
                     .repoName(repoName)
                     .type(type==AppType.SPRING? AppType.SPRING : AppType.DJANGO)
                     .status(AppStatus.STARTING) // 초기는 종료 상태
-                    .userId(userId)
+                    .user(user)
                     .build();
         }
 
     }
 
-    @Getter
-    public record updateAppDto(
+    public record UpdateAppDto(
             String name,
 
             String description
     ) {}
+
+    @Builder
+    public record AppResponseDto(
+            String id,
+
+            String name,
+
+            AppType type,
+
+            String description,
+
+            AppStatus status,
+
+            String repoUrl,
+
+            String owner,
+
+            String repoName
+    ){
+        public static AppResponseDto from(App app) {
+            return AppResponseDto.builder()
+                    .id(app.getId())
+                    .name(app.getName())
+                    .type(app.getType())
+                    .description(app.getDescription())
+                    .status(app.getStatus())
+                    .repoUrl(app.getRepoUrl())
+                    .owner(app.getOwner())
+                    .repoName(app.getRepoName())
+                    .build();
+        }
+    }
 
 }

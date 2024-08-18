@@ -3,6 +3,8 @@ package com.ds.deploysurfingbackend.domain.app.entity;
 import com.ds.deploysurfingbackend.domain.app.entity.type.AppStatus;
 import com.ds.deploysurfingbackend.domain.app.entity.type.AppType;
 import com.ds.deploysurfingbackend.domain.app.dto.AppDto;
+import com.ds.deploysurfingbackend.domain.aws.entity.EC2;
+import com.ds.deploysurfingbackend.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -19,22 +21,27 @@ public class App extends BaseTimeEntity {
     @Column(name = "app_id", nullable = false)
     private String id;
 
+    //앱 이름
     @Column(name = "name", nullable = false)
     private String name;
 
+    //앱 타입
     @Enumerated(value = EnumType.STRING)
     @Column(name = "type", nullable = false)
     private AppType type;
 
+    //앱 설명
     @Column(name = "description")
     private String description;
 
+    //앱 상태
     @Enumerated(value = EnumType.STRING)
     @Column(name = "status", nullable = false)
     private AppStatus status;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 
     // ------------ GitHub 관련 내용 -------------
     @Column(name = "repoUrl", nullable = false)
@@ -49,9 +56,18 @@ public class App extends BaseTimeEntity {
 
     private String repoPublicKey;
 
-    //------------------------------------------
-
+    //초기화 여부
     private boolean isInit;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ec2_id", unique = true)
+    private EC2 ec2;
+
+    //-------------------[ Type 별 필드. 정규화 필요 ]-----------------------
+    private String SpringBootVersion;
+
+    private String JavaVersion;
+
 
     public void setRepoPublicKeyId(String repoPublicKeyId) {
         this.repoPublicKeyId = repoPublicKeyId;
@@ -61,13 +77,13 @@ public class App extends BaseTimeEntity {
         this.repoPublicKey = repoPublicKey;
     }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
+    public void setUser(User user) {
+        this.user = user;
     }
 
-    public void update(AppDto.updateAppDto updateAppDto) {
-        name = updateAppDto.getName();
-        description = updateAppDto.getDescription();
+    public void update(AppDto.UpdateAppDto updateAppDto) {
+        name = updateAppDto.name();
+        description = updateAppDto.description();
     }
 
     public void setInit(boolean init) {
