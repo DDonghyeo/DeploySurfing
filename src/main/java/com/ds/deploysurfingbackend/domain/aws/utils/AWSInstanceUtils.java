@@ -1,9 +1,10 @@
 package com.ds.deploysurfingbackend.domain.aws.utils;
 
 import com.ds.deploysurfingbackend.domain.aws.entity.EC2;
+import com.ds.deploysurfingbackend.domain.aws.exception.AwsErrorCode;
 import com.ds.deploysurfingbackend.domain.aws.type.EC2AMI;
 import com.ds.deploysurfingbackend.global.exception.CustomException;
-import com.ds.deploysurfingbackend.global.exception.ErrorCode;
+import com.ds.deploysurfingbackend.global.exception.CommonErrorCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -58,7 +59,7 @@ public class AWSInstanceUtils {
             List<Vpc> vpcs = describeVpc(ec2);
 
             if (vpcs.isEmpty()) {
-                throw new CustomException(ErrorCode.VPC_NOT_FOUND);
+                throw new CustomException(AwsErrorCode.VPC_NOT_FOUND);
             }
             String vpcId = vpcs.get(0).vpcId();
 
@@ -125,7 +126,7 @@ public class AWSInstanceUtils {
             if (e instanceof Ec2Exception) {
                 log.error(((Ec2Exception) e).awsErrorDetails().errorMessage());
             }
-            throw new CustomException(ErrorCode.SERVER_ERROR, e.getMessage());
+            throw new CustomException(CommonErrorCode.SERVER_ERROR, e.getMessage());
 
         } catch (IOException e) {
             log.error("IO Exception : 파일 쓰기에 실패했습니다.");
@@ -158,7 +159,7 @@ public class AWSInstanceUtils {
         } catch (AwsServiceException | SdkClientException e){
             ec2.close();
             log.error(" [ AWS Utils ]  인스턴스 중지에 실패했습니다. : {}", e.getMessage());
-            throw new CustomException(ErrorCode.SERVER_ERROR, e.getMessage());
+            throw new CustomException(CommonErrorCode.SERVER_ERROR, e.getMessage());
         }
     }
 
@@ -205,7 +206,7 @@ public class AWSInstanceUtils {
 
         } catch (AwsServiceException | SdkClientException e) {
             log.info(" [ AWS Utils ] EC2 삭제에 실패했습니다 : {}", e.getMessage());
-            throw new CustomException(ErrorCode.SERVER_ERROR, e.getMessage());
+            throw new CustomException(CommonErrorCode.SERVER_ERROR, e.getMessage());
         }
     }
 
@@ -235,7 +236,7 @@ public class AWSInstanceUtils {
 
             //키 이름이 중복될 경우 오류 발생
             if (keyPair.keyName().equals(keyName)) {
-                throw new CustomException(ErrorCode.DUPLICATE_KEY_NAME);
+                throw new CustomException(AwsErrorCode.DUPLICATE_KEY_NAME);
             }
         });
     }
