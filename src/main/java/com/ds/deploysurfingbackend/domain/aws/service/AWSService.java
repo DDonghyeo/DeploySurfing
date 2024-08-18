@@ -6,7 +6,7 @@ import com.ds.deploysurfingbackend.domain.aws.utils.AWSInstanceUtils;
 import com.ds.deploysurfingbackend.domain.aws.utils.AWSStsUtil;
 import com.ds.deploysurfingbackend.domain.user.entity.User;
 import com.ds.deploysurfingbackend.global.exception.CustomException;
-import com.ds.deploysurfingbackend.global.exception.ErrorCode;
+import com.ds.deploysurfingbackend.global.exception.CommonErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -52,7 +52,7 @@ public class AWSService {
         //TODO : 유저 정보 가져와서 세션 생성
         User user = new User();
         StaticCredentialsProvider role = getStaticCredential(user);
-        EC2 ec2 = ec2Repository.findByEc2Id(ec2Id).orElseThrow(() -> new CustomException(ErrorCode.EC2_NOT_FOUND));
+        EC2 ec2 = ec2Repository.findByEc2Id(ec2Id).orElseThrow(() -> new CustomException(CommonErrorCode.EC2_NOT_FOUND));
         AWSInstanceUtils.terminateEC2(role, ec2Id, ec2.getAssociationId(), ec2.getSecurityGroupId(), ec2.getKeyName());
     }
 

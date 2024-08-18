@@ -10,7 +10,7 @@ public class CustomException extends RuntimeException {
 
     public CustomException(ErrorCode errorCode) {
         this.errorCode = errorCode;
-        this.errorMessage = errorCode.getDetail();
+        this.errorMessage = errorCode.getMessage();
     }
 
     //@Valid 오류처리
