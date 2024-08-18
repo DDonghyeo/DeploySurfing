@@ -23,7 +23,7 @@ import java.io.IOException;
 
 @Slf4j
 @RequiredArgsConstructor
-public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
+public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
@@ -64,7 +64,7 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
         CustomUserDetails customUserDetails = (CustomUserDetails)authentication.getPrincipal();
 
 
-        //Client 에게 줄 Response 를 Build
+        //Client 에게 줄 Response
         JwtDto jwtDto = JwtDto.builder()
                 .accessToken(jwtUtil.createJwtAccessToken(customUserDetails)) //access token 생성
                 .refreshToken(jwtUtil.createJwtRefreshToken(customUserDetails)) //refresh token 생성
@@ -85,9 +85,7 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
             @NonNull AuthenticationException failed) throws IOException {
-
-//        log.info("[ Login Filter ] 로그인에 실패하였습니다.");
-
+        
         String errorMessage;
         if (failed instanceof BadCredentialsException) {
             errorMessage = "잘못된 정보입니다.";

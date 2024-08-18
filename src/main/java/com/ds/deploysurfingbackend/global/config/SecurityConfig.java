@@ -1,6 +1,7 @@
 package com.ds.deploysurfingbackend.global.config;
 
-import com.ds.deploysurfingbackend.global.filter.CustomLoginFilter;
+import com.ds.deploysurfingbackend.domain.user.repository.UserRepository;
+import com.ds.deploysurfingbackend.global.filter.JwtAuthenticationFilter;
 import com.ds.deploysurfingbackend.global.filter.CustomLogoutHandler;
 import com.ds.deploysurfingbackend.global.filter.JwtAuthorizationFilter;
 import com.ds.deploysurfingbackend.global.utils.HttpResponseUtil;
@@ -30,11 +31,13 @@ public class SecurityConfig {
 
     private final RedisUtil redisUtil;
 
+    private final UserRepository userRepository;
+
 
     //인증이 필요하지 않은 url
     private final String[] allowedUrls = {
-            "/login", //로그인은 인증이 필요하지 않음
-            "/user/create", //회원가입은 인증이 필요하지 않음
+            "/user/login", //로그인은 인증이 필요하지 않음
+            "/user/signup", //회원가입은 인증이 필요하지 않음
             "/auth/reissue", //토큰 재발급은 인증이 필요하지 않음
             "api/usage",
             "/swagger-ui/**", //swagger 관련 URL
@@ -87,17 +90,17 @@ public class SecurityConfig {
 
 
         // Login Filter
-        CustomLoginFilter loginFilter = new CustomLoginFilter(
+        JwtAuthenticationFilter loginFilter = new JwtAuthenticationFilter(
                 authenticationManager(authenticationConfiguration), jwtUtil);
         // Login Filter URL 지정
-        loginFilter.setFilterProcessesUrl("/login");
+        loginFilter.setFilterProcessesUrl("/user/login");
 
         // filter chain 에 login filter 등록
         http
                 .addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class);
         // login filter 전에 Auth Filter 등록
         http
-                .addFilterBefore(new JwtAuthorizationFilter(jwtUtil, redisUtil), CustomLoginFilter.class);
+                .addFilterBefore(new JwtAuthorizationFilter(jwtUtil, redisUtil), JwtAuthenticationFilter.class);
 
 
         // JwtException 에 대한 Custom Exception 처리

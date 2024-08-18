@@ -2,14 +2,19 @@ package com.ds.deploysurfingbackend.domain.user.entity;
 
 import com.ds.deploysurfingbackend.domain.app.entity.BaseTimeEntity;
 import com.ds.deploysurfingbackend.domain.user.dto.request.UserRequest;
+import com.ds.deploysurfingbackend.domain.user.entity.type.Role;
 import com.ds.deploysurfingbackend.domain.user.entity.type.UserStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.List;
 
 @Getter
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@NoArgsConstructor
+@RequiredArgsConstructor
+//@NoArgsConstructor
 @Entity
 @Table(name = "user")
 public class User extends BaseTimeEntity {
@@ -22,9 +27,8 @@ public class User extends BaseTimeEntity {
 
     private String email;
 
+    @JsonIgnore
     private String password;
-
-    private String roles;
 
     private UserStatus status;
 
@@ -38,6 +42,8 @@ public class User extends BaseTimeEntity {
 
     private String gitHubToken;
 
+    private List<Role> roles;
+
     public void update(UserRequest.UpdateDto updateDto) {
         name = updateDto.name() == null ? name : updateDto.name();
         awsRoleArn = updateDto.awsRoleArn() == null ? awsRoleArn : updateDto.awsRoleArn();
@@ -49,5 +55,9 @@ public class User extends BaseTimeEntity {
 
     public void setStatus(UserStatus status) {
         this.status = status;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }

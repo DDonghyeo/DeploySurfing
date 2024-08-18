@@ -4,17 +4,22 @@ import com.ds.deploysurfingbackend.domain.user.entity.User;
 import com.ds.deploysurfingbackend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class CustomUserDetailsService implements UserDetailsService {
+public class UserRepositoryUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
 
@@ -22,11 +27,12 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 
-        Optional<User> userEntity = userRepository.findByEmail(email);
-        if (userEntity.isPresent()) {
-            User user = userEntity.get();
-            return new CustomUserDetails(user.getEmail(),user.getPassword(), user.getRoles());
+        Optional<User> optionalUser = userRepository.findByEmail(email);
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            return new CustomUserDetails(user);
         }
         throw new UsernameNotFoundException("사용자가 존재하지 않습니다.");
     }
+
 }

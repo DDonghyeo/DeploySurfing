@@ -1,6 +1,11 @@
 package com.ds.deploysurfingbackend.global.filter;
 
 import com.ds.deploysurfingbackend.domain.user.auth.CustomUserDetails;
+import com.ds.deploysurfingbackend.domain.user.auth.UserRepositoryUserDetailsService;
+import com.ds.deploysurfingbackend.domain.user.entity.User;
+import com.ds.deploysurfingbackend.domain.user.entity.type.Role;
+import com.ds.deploysurfingbackend.domain.user.repository.UserRepository;
+import com.ds.deploysurfingbackend.global.utils.HttpResponseUtil;
 import com.ds.deploysurfingbackend.global.utils.JwtUtil;
 import com.ds.deploysurfingbackend.global.utils.RedisUtil;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -18,6 +23,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -44,7 +51,8 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
              //logout 처리된 accessToken
             if (redisUtil.get(accessToken) != null && redisUtil.get(accessToken).equals("logout")) {
-                logger.info("[*] Logout accessToken");
+                log.warn("[ JwtAuthorizationFilter ] 로그아웃된 엑세스 토큰입니다.");
+                HttpResponseUtil.setErrorResponse(response, HttpStatus.UNAUTHORIZED, "로그아웃 처리된 토큰입니다." );
                 filterChain.doFilter(request, response);
                 return;
             }
@@ -52,10 +60,8 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             authenticateAccessToken(accessToken);
             filterChain.doFilter(request, response);
         } catch (ExpiredJwtException e) {
-//            logger.warn("[ JwtAuthorizationFilter ] accessToken 이 만료되었습니다.");
-            response.setStatus(HttpStatus.UNAUTHORIZED.value()); // 401 return
-            response.setCharacterEncoding("UTF-8");
-            response.getWriter().write("만료된 토큰입니다.");
+            log.warn("[ JwtAuthorizationFilter ] 만료된 엑세스 토큰입니다.");
+            HttpResponseUtil.setErrorResponse(response, HttpStatus.UNAUTHORIZED, "만료된 토큰입니다." );
         }
     }
 
@@ -66,6 +72,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
         //CustomUserDetail 객체 생성
         CustomUserDetails userDetails = new CustomUserDetails(
+                jwtUtil.getId(accessToken),
                 jwtUtil.getEmail(accessToken),
                 null,
                 jwtUtil.getRoles(accessToken)

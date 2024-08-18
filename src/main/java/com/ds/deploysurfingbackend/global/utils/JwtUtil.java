@@ -2,6 +2,7 @@ package com.ds.deploysurfingbackend.global.utils;
 
 import com.ds.deploysurfingbackend.domain.user.auth.CustomUserDetails;
 import com.ds.deploysurfingbackend.domain.user.dto.request.JwtDto;
+import com.ds.deploysurfingbackend.domain.user.entity.type.Role;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
@@ -18,6 +19,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -42,6 +44,14 @@ public class JwtUtil {
         refreshExpMs = refresh;
         this.redisUtil = redisUtil;
     }
+    public Long getId(String token) throws SignatureException {
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("id", Long.class);
+    }
 
     // JWT 토큰을 입력으로 받아 토큰의 subject 로부터 사용자 Email 추출하는 메서드
     public String getEmail(String token) throws SignatureException {
@@ -55,34 +65,35 @@ public class JwtUtil {
     }
 
     // JWT 토큰을 입력으로 받아 토큰의 claim 에서 사용자 권한을 추출하는 메서드
-    public String getRoles(String token) throws SignatureException{
+    @SuppressWarnings("unchecked")
+    public List<Role> getRoles(String token) throws SignatureException{
 //        log.info("[ JwtUtil ] 토큰에서 권한을 추출합니다.");
-        return Jwts.parser()
+        List<String> roles = Jwts.parser()
                 .verifyWith(secretKey)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload()
-                .get("role", String.class);
+                .get("roles", List.class);
+        return roles.stream().map(Role::valueOf).toList();
     }
 
     // Token 발급하는 메서드
     public String tokenProvider(CustomUserDetails customUserDetails, Instant expiration) {
 
-//        log.info("[ JwtUtil ] 토큰을 새로 생성합니다.");
         //현재 시간
         Instant issuedAt = Instant.now();
 
-        //토큰에 부여할 권한
-        String authorities = customUserDetails.getAuthorities().stream()
+        List<String> roles = customUserDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.joining(","));
+                .toList();
 
         return Jwts.builder()
                 .header() //헤더 부분
                 .add("typ", "JWT") // JWT type
                 .and()
                 .subject(customUserDetails.getUsername()) //Subject 에 username (email) 추가
-                .claim("role", authorities) //권한 추가
+                .claim("id", customUserDetails.getId())
+                .claim("roles", roles) //권한 추가
                 .issuedAt(Date.from(issuedAt)) // 현재 시간 추가
                 .expiration(Date.from(expiration)) //만료 시간 추가
                 .signWith(secretKey) //signature 추가
@@ -110,6 +121,7 @@ public class JwtUtil {
 
         // refreshToken 에서 user 정보를 가져와서 새로운 토큰을 발급 (발급 시간, 유효 시간(reset)만 새로 적용)
         CustomUserDetails userDetails = new CustomUserDetails(
+                getId(refreshToken),
                 getEmail(refreshToken),
                 null,
                 getRoles(refreshToken)
@@ -175,5 +187,18 @@ public class JwtUtil {
             //원하는 Exception throw
             throw new ExpiredJwtException(null, null, "만료된 JWT 토큰입니다.");
         }
+    }
+
+    public Long getExpTime(String token) {
+        long seconds = 3 *60;
+        return Jwts
+                .parser()
+                .clockSkewSeconds(seconds)
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getExpiration()
+                .getTime();
     }
 }
