@@ -1,6 +1,7 @@
 package com.ds.deploysurfingbackend.domain.app.service;
 
 import com.ds.deploysurfingbackend.domain.app.entity.App;
+import com.ds.deploysurfingbackend.domain.app.entity.type.AppStatus;
 import com.ds.deploysurfingbackend.domain.app.exception.AppErrorCode;
 import com.ds.deploysurfingbackend.domain.aws.service.AWSService;
 import com.ds.deploysurfingbackend.domain.user.auth.AuthUser;
@@ -108,6 +109,7 @@ public class AppService {
         checkAppAccessPermission(user.getEmail(), app);
 
         //1. EC2 생성
+        app.setStatus(AppStatus.STARTING);
         awsService.createEC2(authUser, app.getName());
 
         /**
@@ -134,7 +136,20 @@ public class AppService {
         //5. .github/workflows 디렉토리에 deploy.yml 생성하기
 
         //앱 초기설정 완료
+        app.setStatus(AppStatus.RUNNING);
         app.setInit(true);
+    }
+
+    @Transactional
+    public void pauseApp(AuthUser authUser, String appId) {
+        App app = appRepository.findById(appId).orElseThrow(
+                () -> new CustomException(AppErrorCode.APP_NOT_FOUND));
+
+        checkAppAccessPermission(authUser.getEmail(), app);
+
+        awsService.pauseEC2(authUser, app.getEc2().getEc2Id());
+
+        app.setStatus(AppStatus.PAUSED);
     }
 
     private void checkAppAccessPermission(String email, App app) {

@@ -5,6 +5,7 @@ import com.ds.deploysurfingbackend.domain.app.entity.type.AppType;
 import com.ds.deploysurfingbackend.domain.app.dto.AppDto;
 import com.ds.deploysurfingbackend.domain.aws.entity.EC2;
 import com.ds.deploysurfingbackend.domain.user.entity.User;
+import com.ds.deploysurfingbackend.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -88,5 +89,9 @@ public class App extends BaseTimeEntity {
 
     public void setInit(boolean init) {
         isInit = init;
+    }
+
+    public void setStatus(AppStatus status) {
+        this.status = status;
     }
 }

@@ -63,4 +63,12 @@ public class AppController {
         return ResponseEntity.ok("앱 초기화가 완료되었습니다.");
     }
 
+    @Operation(tags = "app", summary = "앱 일시 중지", description = "앱 실행 중인 EC2를 일시중지합니다.")
+    @GetMapping("/init")
+    public ResponseEntity<?> pauseApp(@CurrentUser AuthUser authUser, @RequestParam("appId") String appId) {
+
+        appService.pauseApp(authUser, appId);
+        return ResponseEntity.ok("앱 일시 중지가 완료되었습니다.");
+    }
+
 }
