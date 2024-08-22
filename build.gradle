@@ -40,8 +40,9 @@ dependencies {
     //WebFlux
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
-    // LibSodium
-    implementation "com.goterl:lazysodium-java:5.1.4"
+    //Libsodium
+    implementation 'com.goterl:lazysodium-java:5.1.1'
+    implementation 'net.java.dev.jna:jna:5.8.0'
 
     //Swagger
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.4'
