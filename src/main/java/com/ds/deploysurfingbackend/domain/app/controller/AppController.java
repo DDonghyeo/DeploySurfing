@@ -64,7 +64,7 @@ public class AppController {
     }
 
     @Operation(tags = "app", summary = "앱 일시 중지", description = "앱 실행 중인 EC2를 일시중지합니다.")
-    @GetMapping("/init")
+    @GetMapping("/pause")
     public ResponseEntity<?> pauseApp(@CurrentUser AuthUser authUser, @RequestParam("appId") String appId) {
 
         appService.pauseApp(authUser, appId);
