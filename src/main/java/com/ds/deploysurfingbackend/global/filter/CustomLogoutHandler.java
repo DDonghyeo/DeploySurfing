@@ -1,7 +1,7 @@
 package com.ds.deploysurfingbackend.global.filter;
 
 import com.ds.deploysurfingbackend.global.exception.CustomException;
-import com.ds.deploysurfingbackend.global.exception.ErrorCode;
+import com.ds.deploysurfingbackend.global.exception.CommonErrorCode;
 import com.ds.deploysurfingbackend.global.utils.JwtUtil;
 import com.ds.deploysurfingbackend.global.utils.RedisUtil;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -46,7 +46,7 @@ public class CustomLogoutHandler implements LogoutHandler {
 
         } catch (ExpiredJwtException e) {
             log.warn("Acess Token이 만료되었습니다.");
-            throw new CustomException(ErrorCode.TOKEN_EXPIRED);
+            throw new CustomException(CommonErrorCode.TOKEN_EXPIRED);
         }
     }
 }

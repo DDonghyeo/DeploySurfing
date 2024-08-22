@@ -1,5 +1,6 @@
 package com.ds.deploysurfingbackend.domain.app.entity;
 
+import com.ds.deploysurfingbackend.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

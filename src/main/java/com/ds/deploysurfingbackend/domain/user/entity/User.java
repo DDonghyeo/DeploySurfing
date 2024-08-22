@@ -1,6 +1,6 @@
 package com.ds.deploysurfingbackend.domain.user.entity;
 
-import com.ds.deploysurfingbackend.domain.app.entity.BaseTimeEntity;
+import com.ds.deploysurfingbackend.global.entity.BaseTimeEntity;
 import com.ds.deploysurfingbackend.domain.user.dto.request.UserRequest;
 import com.ds.deploysurfingbackend.domain.user.entity.type.Role;
 import com.ds.deploysurfingbackend.domain.user.entity.type.UserStatus;
