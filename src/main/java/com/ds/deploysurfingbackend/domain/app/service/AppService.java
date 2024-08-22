@@ -4,6 +4,8 @@ import com.ds.deploysurfingbackend.domain.app.entity.App;
 import com.ds.deploysurfingbackend.domain.app.entity.type.AppStatus;
 import com.ds.deploysurfingbackend.domain.app.exception.AppErrorCode;
 import com.ds.deploysurfingbackend.domain.aws.service.AWSService;
+import com.ds.deploysurfingbackend.domain.github.dto.ActionSecretDto;
+import com.ds.deploysurfingbackend.domain.github.service.GitHubService;
 import com.ds.deploysurfingbackend.domain.user.auth.AuthUser;
 import com.ds.deploysurfingbackend.domain.user.entity.User;
 import com.ds.deploysurfingbackend.domain.app.dto.AppDto;
@@ -17,6 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
@@ -27,6 +31,7 @@ public class AppService {
     private final AppRepository appRepository;
     private final UserRepository userRepository;
     private final AWSService awsService;
+    private final GitHubService gitHubService;
 
     //앱 생성
     @Transactional
@@ -109,23 +114,14 @@ public class AppService {
         checkAppAccessPermission(user.getEmail(), app);
 
         //1. EC2 생성
+        //TODO: EC2 생성되어 있는지 확인 필요
         app.setStatus(AppStatus.STARTING);
         awsService.createEC2(authUser, app.getName());
 
-        /**
-         * GitHub 구성하기
-         */
-
         //1. Action Secret 구성하기
-        //APPLICATION_YML
-        //DOCKERHUB_IMAGENAME
-        //DOCKERHUB_TOKEN
-        //DOCKERHUB_USERNAME
-        //EC2_HOST
-        //EC2_PASSWORD
-        //EC2_SSH_PORT
-        //EC2_USERNAME
-        //SSL_KEY
+        List<ActionSecretDto> secrets = createDefaultActionSecrets();
+        secrets.forEach(secret -> gitHubService.createActionSecret(authUser, appId, user.getGitHubToken(), secret));
+
 
         //2. 깃허브 브랜치 만들기 : deploy
 
@@ -138,6 +134,17 @@ public class AppService {
         //앱 초기설정 완료
         app.setStatus(AppStatus.RUNNING);
         app.setInit(true);
+    }
+
+    private List<ActionSecretDto> createDefaultActionSecrets() {
+        return Arrays.asList(
+                new ActionSecretDto("APPLICATION_YML", "temp"),
+                new ActionSecretDto("DOCKERHUB_IMAGENAME", "temp"),
+                new ActionSecretDto("DOCKERHUB_TOKEN", "temp"),
+                new ActionSecretDto("DOCKERHUB_USERNAME", "temp"),
+                new ActionSecretDto("EC2_HOST", "temp"),
+                new ActionSecretDto("SSH_KEY", "temp")
+        );
     }
 
     @Transactional
