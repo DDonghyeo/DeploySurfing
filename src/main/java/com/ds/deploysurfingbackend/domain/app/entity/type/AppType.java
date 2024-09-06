@@ -1,7 +1,7 @@
 package com.ds.deploysurfingbackend.domain.app.entity.type;
 
 import com.ds.deploysurfingbackend.global.exception.CustomException;
-import com.ds.deploysurfingbackend.global.exception.ErrorCode;
+import com.ds.deploysurfingbackend.global.exception.CommonErrorCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -30,6 +30,6 @@ public enum AppType {
                 return AppType.VANILLA_JS;
             }
         }
-        throw new CustomException(ErrorCode.INVALID_APP_TYPE);
+        throw new CustomException(CommonErrorCode.INVALID_APP_TYPE);
     }
 }

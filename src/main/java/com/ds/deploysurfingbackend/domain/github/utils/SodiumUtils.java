@@ -9,6 +9,7 @@ import com.goterl.lazysodium.utils.Key;
 import com.goterl.lazysodium.utils.KeyPair;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.UriBuilder;
 
 import java.util.Base64;
 
