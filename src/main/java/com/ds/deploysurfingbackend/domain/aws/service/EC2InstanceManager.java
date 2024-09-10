@@ -1,8 +1,9 @@
-package com.ds.deploysurfingbackend.domain.aws.utils;
+package com.ds.deploysurfingbackend.domain.aws.service;
 
 import com.ds.deploysurfingbackend.domain.aws.entity.EC2;
 import com.ds.deploysurfingbackend.domain.aws.exception.AwsErrorCode;
 import com.ds.deploysurfingbackend.domain.aws.type.EC2AMI;
+import com.ds.deploysurfingbackend.global.annotation.RedissonLock;
 import com.ds.deploysurfingbackend.global.exception.CustomException;
 import com.ds.deploysurfingbackend.global.exception.CommonErrorCode;
 import lombok.extern.slf4j.Slf4j;
@@ -23,68 +24,39 @@ import java.util.List;
 
 @Slf4j
 @Component
-public class AWSInstanceUtils {
+public class EC2InstanceManager {
 
     private static final String SECURITY_GROUP_NAME = "deploySurfing_Security_Group";
     private static final String SECURITY_GROUP_DESC = "Created By DeploySurfing";
 
-    public static EC2 createFreeTierEC2(String name,
+    public EC2 createFreeTierEC2(String name,
                                         StaticCredentialsProvider staticCredentialsProvider) {
 
         log.info(" [ AWS Utils ] 새로운 EC2를 생성합니다. 이름 ---> {}", name);
 
         Region region = Region.AP_NORTHEAST_2; // 서울 REGION
-        Ec2Client ec2 = Ec2Client.builder()
-                .credentialsProvider(staticCredentialsProvider)
-                .region(region)
-                .build();
+        Ec2Client ec2 = createEc2Client(staticCredentialsProvider, region);
 
         String keyFilePathStr = "" + name + ".pem";
 
         try {
-            //----------------- [ 키 페어 생성 ] -----------------
-            log.info(" [ AWS Utils ] 새로운 키 페어를 생성합니다. 이름 ---> {}", name);
-            //중복되는 키가 있는지 확인
-            checkDuplicateKeyName(ec2, name);
-            String keyFileContent = createKeyPair(ec2, name);
-
-            //키 리소스 저장
-            Path keyFilePath = Paths.get(keyFilePathStr);
-            Files.write(keyFilePath, keyFileContent.getBytes());
-            log.info(" [ AWS Utils ] 키 페어 생성에 성공했습니다. 내용 ---> {}", keyFileContent);
+            createKeyPair(name, ec2, keyFilePathStr);
 
 
             //----------------- [ 보안 그룹 생성 ] -----------------
-            //보안 그룹 추가할 VPC ID
-            List<Vpc> vpcs = describeVpc(ec2);
-
-            if (vpcs.isEmpty()) {
-                throw new CustomException(AwsErrorCode.VPC_NOT_FOUND);
-            }
-            String vpcId = vpcs.get(0).vpcId();
+            String vpcId = getVpcId(ec2);
 
             log.info(" [ AWS Utils ] 새로운 보안그룹을 생성합니다. VPC ID ---> {}", vpcId);
-
             String secGroupId = createBasicSecurityGroup(ec2, SECURITY_GROUP_NAME, SECURITY_GROUP_DESC, vpcId);
             log.info(" [ AWS Utils ] 새로운 보안그룹을 생성에 성공했습니다. Group ID ---> {}", secGroupId);
 
 
             //----------------- [ EC2 실행 ] -----------------
 
-            RunInstancesRequest runRequest = RunInstancesRequest.builder()
-                    .imageId(EC2AMI.AMAZON_LINUX_2023_AMI.getValue())
-                    .instanceType(InstanceType.T2_MICRO) //프리티어가 가능한 t2_micro
-                    .securityGroupIds(SECURITY_GROUP_NAME)
-                    .keyName(name)
-                    .additionalInfo("Created By DeploySurfing")
-                    .maxCount(1)
-                    .minCount(1)
-                    .build();
-
+            RunInstancesRequest runRequest = createEc2RunRequest(name);
             //인스턴스 실행까지 기다리기 위해 Waiter 사용
             log.info(" [ AWS Utils ] 인스턴스가 실행될 때 까지 대기합니다..");
-
-            RunInstancesResponse response = ec2.runInstances(runRequest);
+            RunInstancesResponse response = runInstance(ec2, runRequest);
 
 
             //----------------- [ EC2 정보 ] -----------------
@@ -134,14 +106,60 @@ public class AWSInstanceUtils {
         }
     }
 
-    public static void pauseEC2(StaticCredentialsProvider staticCredentialsProvider,
-                                String instanceId) {
+    private RunInstancesResponse runInstance(Ec2Client ec2, RunInstancesRequest runRequest) {
+        return ec2.runInstances(runRequest);
+    }
 
-        Region region = Region.AP_NORTHEAST_2; // 서울 REGION
-        Ec2Client ec2 = Ec2Client.builder()
+    private Ec2Client createEc2Client(StaticCredentialsProvider staticCredentialsProvider, Region region) {
+        return Ec2Client.builder()
                 .credentialsProvider(staticCredentialsProvider)
                 .region(region)
                 .build();
+    }
+
+    private RunInstancesRequest createEc2RunRequest(String name) {
+        return RunInstancesRequest.builder()
+                .imageId(EC2AMI.AMAZON_LINUX_2023_AMI.getValue())
+                .instanceType(InstanceType.T2_MICRO) //프리티어가 가능한 t2_micro
+                .securityGroupIds(SECURITY_GROUP_NAME)
+                .keyName(name)
+                .additionalInfo("Created By DeploySurfing")
+                .maxCount(1)
+                .minCount(1)
+                .build();
+    }
+
+    private String getVpcId(Ec2Client ec2) {
+        //보안 그룹 추가할 VPC ID
+        List<Vpc> vpcs = describeVpc(ec2);
+
+        if (vpcs.isEmpty()) {
+            throw new CustomException(AwsErrorCode.VPC_NOT_FOUND);
+        }
+        String vpcId = vpcs.get(0).vpcId();
+
+        return vpcId;
+    }
+
+    private void createKeyPair(String name, Ec2Client ec2, String keyFilePathStr) throws IOException {
+        //----------------- [ 키 페어 생성 ] -----------------
+        log.info(" [ AWS Utils ] 새로운 키 페어를 생성합니다. 이름 ---> {}", name);
+        //중복되는 키가 있는지 확인
+        checkDuplicateKeyName(ec2, name);
+        String keyFileContent = createKeyPair(ec2, name);
+
+        //키 리소스 저장
+        Path keyFilePath = Paths.get(keyFilePathStr);
+        Files.write(keyFilePath, keyFileContent.getBytes());
+        log.info(" [ AWS Utils ] 키 페어 생성에 성공했습니다. 내용 ---> {}", keyFileContent);
+    }
+
+    @RedissonLock(value = "#instanceId", waitTime = 10000L, leaseTime = 30000L)
+    public void pauseEC2(StaticCredentialsProvider staticCredentialsProvider,
+                                String instanceId) {
+
+        Region region = Region.AP_NORTHEAST_2; // 서울 REGION
+        Ec2Client ec2 = createEc2Client(staticCredentialsProvider, region);
 
         try {
             StopInstancesRequest stopInstancesRequest = StopInstancesRequest.builder()
@@ -164,7 +182,8 @@ public class AWSInstanceUtils {
     }
 
 
-    public static void terminateEC2(StaticCredentialsProvider staticCredentialsProvider,
+    @RedissonLock(value = "#instanceId", waitTime = 10000L, leaseTime = 30000L)
+    public void terminateEC2(StaticCredentialsProvider staticCredentialsProvider,
                                     String instanceId,
                                     String allocationId,
                                     String secGroupId,
@@ -173,10 +192,7 @@ public class AWSInstanceUtils {
         log.info(" [ AWS Utils ] 새로운 EC2를 종료합니다. id ---> {}", instanceId);
 
         Region region = Region.AP_NORTHEAST_2; // 서울 REGION
-        Ec2Client ec2 = Ec2Client.builder()
-                .credentialsProvider(staticCredentialsProvider)
-                .region(region)
-                .build();
+        Ec2Client ec2 = createEc2Client(staticCredentialsProvider, region);
 
         try {
             log.info(" [ AWS Utils ] 탄력적 IP 할당을 해제합니다. id ---> {}", instanceId);
@@ -213,7 +229,7 @@ public class AWSInstanceUtils {
 
     //  ---- private method ----
 
-    private static String createKeyPair(Ec2Client ec2, String keyName) {
+    private String createKeyPair(Ec2Client ec2, String keyName) {
 
         CreateKeyPairRequest request = CreateKeyPairRequest.builder()
                 .keyName(keyName)
@@ -224,7 +240,7 @@ public class AWSInstanceUtils {
         return response.keyMaterial();
     }
 
-    public static void checkDuplicateKeyName(Ec2Client ec2, String keyName) {
+    public void checkDuplicateKeyName(Ec2Client ec2, String keyName) {
 
         DescribeKeyPairsResponse response = ec2.describeKeyPairs();
         response.keyPairs().forEach(keyPair -> {
@@ -242,7 +258,7 @@ public class AWSInstanceUtils {
     }
 
 
-    public static void describeEC2Instances(Ec2Client ec2, String newInstanceId) {
+    public void describeEC2Instances(Ec2Client ec2, String newInstanceId) {
 
         boolean isRunning = false;
         DescribeInstancesRequest request = DescribeInstancesRequest.builder()
@@ -262,13 +278,13 @@ public class AWSInstanceUtils {
         }
     }
 
-    public static List<Vpc> describeVpc(Ec2Client ec2) {
+    public List<Vpc> describeVpc(Ec2Client ec2) {
         DescribeVpcsResponse response = ec2.describeVpcs();
         return response.vpcs();
     }
 
 
-    public static String createBasicSecurityGroup(Ec2Client ec2, String groupName, String groupDesc, String vpcId) {
+    public String createBasicSecurityGroup(Ec2Client ec2, String groupName, String groupDesc, String vpcId) {
         CreateSecurityGroupRequest createRequest = CreateSecurityGroupRequest.builder()
                 .groupName(groupName)
                 .description(groupDesc)
@@ -296,7 +312,7 @@ public class AWSInstanceUtils {
         return resp.groupId();
     }
 
-    public static String allocateAddress(Ec2Client ec2) {
+    public String allocateAddress(Ec2Client ec2) {
 
         AllocateAddressRequest allocateRequest = AllocateAddressRequest.builder()
                 .domain(DomainType.VPC)
@@ -306,7 +322,7 @@ public class AWSInstanceUtils {
         return allocateResponse.allocationId();
     }
 
-    public static String associateAddress(Ec2Client ec2, String instanceId, String allocationId) {
+    public String associateAddress(Ec2Client ec2, String instanceId, String allocationId) {
         AssociateAddressRequest associateRequest = AssociateAddressRequest.builder()
                 .instanceId(instanceId)
                 .allocationId(allocationId)
@@ -317,7 +333,7 @@ public class AWSInstanceUtils {
 
     }
 
-    public static void disassociateAddress(Ec2Client ec2, String associationId) {
+    public void disassociateAddress(Ec2Client ec2, String associationId) {
         DisassociateAddressRequest addressRequest = DisassociateAddressRequest.builder()
                 .associationId(associationId)
                 .build();
@@ -325,7 +341,7 @@ public class AWSInstanceUtils {
         ec2.disassociateAddress(addressRequest);
     }
 
-    public static void releaseEC2Address(Ec2Client ec2, String allocId) {
+    public void releaseEC2Address(Ec2Client ec2, String allocId) {
         ReleaseAddressRequest request = ReleaseAddressRequest.builder()
                 .allocationId(allocId)
                 .build();
@@ -333,7 +349,7 @@ public class AWSInstanceUtils {
         ec2.releaseAddress(request);
     }
 
-    public static void deleteEC2SecGroup(Ec2Client ec2, String groupId) {
+    public void deleteEC2SecGroup(Ec2Client ec2, String groupId) {
         DeleteSecurityGroupRequest request = DeleteSecurityGroupRequest.builder()
                 .groupId(groupId)
                 .build();
@@ -341,7 +357,7 @@ public class AWSInstanceUtils {
         ec2.deleteSecurityGroup(request);
     }
 
-    public static void deleteKeys(Ec2Client ec2, String keyPair) {
+    public void deleteKeys(Ec2Client ec2, String keyPair) {
         DeleteKeyPairRequest request = DeleteKeyPairRequest.builder()
                 .keyName(keyPair)
                 .build();
@@ -351,7 +367,7 @@ public class AWSInstanceUtils {
 
 
 
-    private static IpPermission getIpPerm(int integer, IpRange ipAllRange) {
+    private IpPermission getIpPerm(int integer, IpRange ipAllRange) {
         return IpPermission.builder()
                 .ipProtocol("tcp")
                 .toPort(integer)

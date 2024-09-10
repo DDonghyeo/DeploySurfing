@@ -37,7 +37,9 @@ public enum CommonErrorCode implements ErrorCode{
     DUPLICATE_RESOURCE(CONFLICT, "COMMON_409", "데이터가 이미 존재합니다"),
 
     //500 INTERNAL SERVER ERROR
-    SERVER_ERROR(INTERNAL_SERVER_ERROR, "COMMON_500", "서버 에러입니다.");
+    SERVER_ERROR(INTERNAL_SERVER_ERROR, "COMMON_500", "서버 에러입니다."),
+    FAILED_TO_ACQUIRE_LOCK(INTERNAL_SERVER_ERROR, "COMMON_500", "락을 얻는데 실패했습니다.")
+    ;
 
     private final HttpStatus httpStatus;
     private final String code;
