@@ -32,7 +32,7 @@ public class GitHubUtils {
      * 참고 : <a href= "https://docs.github.com/ko/rest/repos/contents?apiVersion=2022-11-28#create-or-update-file-contents">Link</a> <br>
      * /repos/{owner}/{repo}/contents/{path}
      */
-    public static ResponseEntity<?> createFileContents(
+    public static void createFileContents(
             String token, String owner, String repo, CreateCommitDto createCommitDto) {
         log.info("[ GitHubUtils ] File Commit started ...");
         CreateCommitRequestDto commitRequestDto = CreateCommitRequestDto.builder()
@@ -50,7 +50,7 @@ public class GitHubUtils {
                 .headers(Map.of("X-GitHub-Api-Version", "2022-11-28"))
                 .build();
 
-        return WebClient.create(GITHUB_API_URL)
+        WebClient.create(GITHUB_API_URL)
                 .put()
                 .uri(uriBuilder -> uriBuilder
                         .path("/repos")
