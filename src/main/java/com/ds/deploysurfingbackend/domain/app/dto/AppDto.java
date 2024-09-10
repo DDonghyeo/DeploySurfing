@@ -29,28 +29,9 @@ public class AppDto {
     ) {
         public App toEntity(User user) {
             String url = gitHubUrl;
-            Pattern pattern = Pattern.compile("https://github.com/(\\w+)/(\\w+)");
-            Matcher matcher = pattern.matcher(url);
-
-            String owner = "";
-            String repoName = "";
-            if (matcher.find()) {
-                owner = matcher.group(1);
-                repoName = matcher.group(2);
-
-                log.info(" [ AppDto ] 사용자 이름: {} ", owner);
-                log.info(" [ AppDto ] 저장소 이름:  {}" , repoName);
-            } else {
-                log.info(" [ AppDto ] URL 형식이 올바르지 않습니다.");
-                //TODO: Custom Exception
-                throw new RuntimeException();
-            }
 
             return App.builder()
                     .name(name)
-                    .repoUrl(gitHubUrl)
-                    .owner(owner)
-                    .repoName(repoName)
                     .type(type==AppType.SPRING? AppType.SPRING : AppType.DJANGO)
                     .status(AppStatus.STARTING) // 초기는 종료 상태
                     .user(user)
@@ -77,8 +58,6 @@ public class AppDto {
 
             AppStatus status,
 
-            String repoUrl,
-
             String owner,
 
             String repoName
@@ -90,9 +69,6 @@ public class AppDto {
                     .type(app.getType())
                     .description(app.getDescription())
                     .status(app.getStatus())
-                    .repoUrl(app.getRepoUrl())
-                    .owner(app.getOwner())
-                    .repoName(app.getRepoName())
                     .build();
         }
     }

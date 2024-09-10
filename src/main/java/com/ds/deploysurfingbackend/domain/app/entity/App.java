@@ -44,19 +44,6 @@ public class App extends BaseTimeEntity {
     @JoinColumn(name = "user_id")
     private User user;
 
-    // ------------ GitHub 관련 내용 -------------
-    @Column(name = "repoUrl", nullable = false)
-    private String repoUrl;
-    @Column(name = "owner", nullable = false)
-    private String owner;
-
-    @Column(name = "repoName", nullable = false)
-    private String repoName;
-
-    private String repoPublicKeyId;
-
-    private String repoPublicKey;
-
     //초기화 여부
     private boolean isInit;
 
@@ -64,19 +51,14 @@ public class App extends BaseTimeEntity {
     @JoinColumn(name = "ec2_id", unique = true)
     private EC2 ec2;
 
+    @OneToOne(mappedBy = "app", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private GithubMetaData gitHubMetaData;
+
     //-------------------[ Type 별 필드. 정규화 필요 ]-----------------------
     private String SpringBootVersion;
 
     private String JavaVersion;
 
-
-    public void setRepoPublicKeyId(String repoPublicKeyId) {
-        this.repoPublicKeyId = repoPublicKeyId;
-    }
-
-    public void setRepoPublicKey(String repoPublicKey) {
-        this.repoPublicKey = repoPublicKey;
-    }
 
     public void setUser(User user) {
         this.user = user;
