@@ -1,8 +1,6 @@
-package com.ds.deploysurfingbackend.domain.github.service;
+package com.ds.deploysurfingbackend.dom링in.github.service;
 
-import com.ds.deploysurfingbackend.domain.app.entity.App;
 import com.ds.deploysurfingbackend.domain.app.entity.GithubMetaData;
-import com.ds.deploysurfingbackend.domain.app.exception.AppErrorCode;
 import com.ds.deploysurfingbackend.domain.app.repository.AppRepository;
 import com.ds.deploysurfingbackend.domain.app.repository.GithubMetadataRepository;
 import com.ds.deploysurfingbackend.domain.github.dto.ActionSecretDto;
@@ -15,7 +13,6 @@ import com.ds.deploysurfingbackend.domain.user.auth.AuthUser;
 import com.ds.deploysurfingbackend.domain.user.entity.User;
 import com.ds.deploysurfingbackend.domain.user.exception.UserErrorCode;
 import com.ds.deploysurfingbackend.domain.user.repository.UserRepository;
-import com.ds.deploysurfingbackend.global.exception.CommonErrorCode;
 import com.ds.deploysurfingbackend.global.exception.CustomException;
 import com.ds.deploysurfingbackend.global.utils.YamlFileReader;
 import lombok.RequiredArgsConstructor;
@@ -38,10 +35,6 @@ public class GitHubService {
                 () -> new CustomException(UserErrorCode.USER_NOT_FOUND));
         GithubMetaData githubMetaData = githubMetadataRepository.findByApp_Id(appId).orElseThrow(
                 () -> new CustomException(GithubErrorCode.GITHUB_METADATA_NOT_FOUND));
-        App app = appRepository.findById(appId).orElseThrow(
-                () -> new CustomException(AppErrorCode.APP_NOT_FOUND));
-
-        checkAppAccessPermission(authUser.getId(), app);
 
         //현재는 생성만 됨. 수정은 sha 필드가 추가로 필요
         String owner = githubMetaData.getOwner();
@@ -58,13 +51,11 @@ public class GitHubService {
     }
 
 
-    public void createActionSecret(AuthUser authUser, String appId, String gitHubToken, ActionSecretDto actionSecret) {
-        App app = appRepository.findById(appId).orElseThrow(
-                () -> new CustomException(AppErrorCode.APP_NOT_FOUND));
+    public void createActionSecret(String appId, String gitHubToken, ActionSecretDto actionSecret) {
         GithubMetaData githubMetaData = githubMetadataRepository.findByApp_Id(appId).orElseThrow(
                 () -> new CustomException(GithubErrorCode.GITHUB_METADATA_NOT_FOUND));
 
-        checkAppAccessPermission(authUser.getId(), app);
+
 
         // Repository Public Key & Key Id
         RepositoryPublicKeyResponseDto repositoryPublicKey = getRepositoryPublicKey(githubMetaData, gitHubToken);
@@ -86,9 +77,6 @@ public class GitHubService {
                 .build();
     }
 
-    private void checkAppAccessPermission(Long userId, App app) {
-        if (!app.getUser().getId().equals(userId))
-            throw new CustomException(CommonErrorCode.NO_AUTHORIZED);
-    }
+
 
 }
