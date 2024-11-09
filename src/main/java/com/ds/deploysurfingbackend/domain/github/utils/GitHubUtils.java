@@ -1,13 +1,11 @@
 package com.ds.deploysurfingbackend.domain.github.utils;
 
-import com.ds.deploysurfingbackend.domain.github.dto.CreateCommitDto;
-import com.ds.deploysurfingbackend.domain.github.dto.CreateCommitRequestDto;
-import com.ds.deploysurfingbackend.domain.github.dto.CreateOrUpdateRepositorySecretRequestDto;
-import com.ds.deploysurfingbackend.domain.github.dto.RepositoryPublicKeyResponseDto;
+import com.ds.deploysurfingbackend.domain.github.dto.*;
 import com.ds.deploysurfingbackend.global.exception.CommonErrorCode;
 import com.ds.deploysurfingbackend.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -15,6 +13,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -123,6 +122,29 @@ public class GitHubUtils {
                 //204 : Updated
                 .onStatus(HttpStatusCode::is4xxClientError, clientResponse -> Mono.error(new CustomException(CommonErrorCode.SERVER_ERROR)))
                 .toBodilessEntity().block();
+    }
+
+    /**
+     * <h1>List Branches</h1>
+     * 참고 : <a href= "https://docs.github.com/ko/rest/branches/branches?apiVersion=2022-11-28#list-branches">Link</a> <br>
+     * /repos/{owner}/{repo}/branches
+     */
+    public static List<BranchListDto> listBranches(final String owner, final String repo, final String token) {
+
+        return WebClient.create(GITHUB_API_URL)
+                .get()
+                .uri(uriBuilder -> uriBuilder
+                        .pathSegment("repos", owner, repo, "branches")
+                        .build()
+                )
+                .header("Authorization", "Bearer " + token)
+                .retrieve()
+                //201 : Created
+                //204 : Updated
+                .onStatus(HttpStatusCode::is4xxClientError, clientResponse -> Mono.error(new CustomException(CommonErrorCode.SERVER_ERROR)))
+                .bodyToMono(new ParameterizedTypeReference<List<BranchListDto>>() {
+                })
+                .block();
     }
 
 }
