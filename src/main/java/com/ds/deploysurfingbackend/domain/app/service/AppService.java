@@ -1,6 +1,5 @@
 package com.ds.deploysurfingbackend.domain.app.service;
 
-import com.ds.deploysurfingbackend.domain.app.dto.GitHubPublicKeyDto;
 import com.ds.deploysurfingbackend.domain.app.entity.App;
 import com.ds.deploysurfingbackend.domain.app.entity.GithubMetaData;
 import com.ds.deploysurfingbackend.domain.app.entity.type.AppStatus;
@@ -24,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -67,7 +65,7 @@ public class AppService {
                 .repoPublicKey(repositoryPublicKey.key())
                 .app(app)
                 .repoUrl(createAppDto.gitHubUrl())
-                .build());
+                .build())
 
         appRepository.save(app);
     }
@@ -80,7 +78,7 @@ public class AppService {
                 () -> new CustomException(AppErrorCode.APP_NOT_FOUND)
         );
         //삭제할 수 있는 권한 있는지 확인
-        checkAppAccessPermission(authUser.getEmail(), app);
+        checkAppAccessPermissionByEmail(authUser.getEmail(), app);
 
         appRepository.deleteById(appId);
 
@@ -94,7 +92,7 @@ public class AppService {
         App app = appRepository.findById(appId).orElseThrow(
                 () -> new CustomException(AppErrorCode.APP_NOT_FOUND));
 
-        checkAppAccessPermission(authUser.getEmail(), app);
+        checkAppAccessPermissionByEmail(authUser.getEmail(), app);
 
         return AppDto.AppResponseDto.from(app);
     }
@@ -115,7 +113,7 @@ public class AppService {
         App app = appRepository.findById(appId).orElseThrow(
                 () -> new CustomException(AppErrorCode.APP_NOT_FOUND));
 
-        checkAppAccessPermission(authUser.getEmail(), app);
+        checkAppAccessPermissionByEmail(authUser.getEmail(), app);
 
         app.update(updateAppDto);
     }
@@ -133,7 +131,7 @@ public class AppService {
                 () -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
         checkAppInitialized(app);
-        checkAppAccessPermission(user.getEmail(), app);
+        checkAppAccessPermissionByEmail(user.getEmail(), app);
 
         //1. EC2 생성
         //TODO: EC2 생성되어 있는지 확인 필요
@@ -142,7 +140,7 @@ public class AppService {
 
         //1. Action Secret 구성하기
         List<ActionSecretDto> secrets = createDefaultActionSecrets();
-        secrets.forEach(secret -> gitHubService.createActionSecret(authUser, appId, user.getGitHubToken(), secret));
+        secrets.forEach(secret -> gitHubService.createActionSecret(appId, user.getGitHubToken(), secret));
 
 
         //2. 깃허브 브랜치 만들기 : deploy
@@ -174,16 +172,11 @@ public class AppService {
         App app = appRepository.findById(appId).orElseThrow(
                 () -> new CustomException(AppErrorCode.APP_NOT_FOUND));
 
-        checkAppAccessPermission(authUser.getEmail(), app);
+        checkAppAccessPermissionByEmail(authUser.getEmail(), app);
 
         awsService.pauseEC2(authUser, app.getEc2().getEc2Id());
 
         app.setStatus(AppStatus.PAUSED);
-    }
-
-    private void checkAppAccessPermission(String email, App app) {
-        if (!app.getUser().getEmail().equals(email))
-            throw new CustomException(CommonErrorCode.NO_AUTHORIZED);
     }
 
     private void checkAppInitialized(App app) {
@@ -216,5 +209,15 @@ public class AppService {
             log.error(" [ AppService ] URL 형식이 올바르지 않습니다: {}", githubUrl);
             throw new IllegalArgumentException("유효하지 않은 GitHub URL 형식입니다.");
         }
+    }
+
+    private void checkAppAccessPermissionByEmail(String email, App app) {
+        if (!app.getUser().getEmail().equals(email))
+            throw new CustomException(CommonErrorCode.NO_AUTHORIZED);
+    }
+
+    private void checkAppAccessPermissionById(Long userId, App app) {
+        if (!app.getUser().getId().equals(userId))
+            throw new CustomException(CommonErrorCode.NO_AUTHORIZED);
     }
 }
