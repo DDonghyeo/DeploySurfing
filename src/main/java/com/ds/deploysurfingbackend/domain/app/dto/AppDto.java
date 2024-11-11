@@ -7,6 +7,7 @@ import com.ds.deploysurfingbackend.domain.user.entity.User;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.lang.Nullable;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -28,11 +29,10 @@ public class AppDto {
 
     ) {
         public App toEntity(User user) {
-            String url = gitHubUrl;
 
             return App.builder()
                     .name(name)
-                    .type(type==AppType.SPRING? AppType.SPRING : AppType.DJANGO)
+                    .type(type==AppType.SPRING? AppType.SPRING : AppType.DJANGO) //24.11.11 Spring or Django (임시)
                     .status(AppStatus.STARTING) // 초기는 종료 상태
                     .user(user)
                     .build();
@@ -54,6 +54,7 @@ public class AppDto {
 
             AppType type,
 
+            @Nullable
             String description,
 
             AppStatus status,
