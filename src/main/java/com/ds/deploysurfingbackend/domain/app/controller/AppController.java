@@ -38,7 +38,7 @@ public class AppController {
         return ResponseEntity.ok(appService.getApp(authUser, appId));
     }
 
-    @Operation(tags = "app", summary = "앱 삭제", description = "앱을 삭제합니다.")
+    @Operation(tags = "app", summary = "앱 삭제", description = "앱을 삭제합니다. EC2도 함께 삭제됩니다.")
     @DeleteMapping("")
     public ResponseEntity<?> deleteApp(@CurrentUser AuthUser authUser, @RequestParam("appId") String appId) {
         appService.deleteAppAndTerminateEC2(authUser, appId);
