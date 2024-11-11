@@ -1,5 +1,6 @@
 package com.ds.deploysurfingbackend.domain.aws.entity;
 
+import com.ds.deploysurfingbackend.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import software.amazon.awssdk.services.ec2.model.InstanceType;
@@ -44,5 +45,9 @@ public class EC2 {
 
     //보안그룹 ID
     private String securityGroupId;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
 }
