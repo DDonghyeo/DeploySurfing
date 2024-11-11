@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 public class AppController {
 
     private final AppService appService;
-    private final AWSService awsService;
 
     @Operation(tags = "app", summary = "앱 생성", description = "앱을 생성합니다.")
     @PostMapping("/create")

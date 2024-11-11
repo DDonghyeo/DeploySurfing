@@ -65,7 +65,7 @@ public class AppService {
                 .repoPublicKey(repositoryPublicKey.key())
                 .app(app)
                 .repoUrl(createAppDto.gitHubUrl())
-                .build())
+                .build());
 
         appRepository.save(app);
     }

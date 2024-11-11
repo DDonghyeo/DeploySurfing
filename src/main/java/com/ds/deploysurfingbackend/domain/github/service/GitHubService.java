@@ -1,4 +1,4 @@
-package com.ds.deploysurfingbackend.dom링in.github.service;
+package com.ds.deploysurfingbackend.domain.github.service;
 
 import com.ds.deploysurfingbackend.domain.app.entity.GithubMetaData;
 import com.ds.deploysurfingbackend.domain.app.repository.AppRepository;
