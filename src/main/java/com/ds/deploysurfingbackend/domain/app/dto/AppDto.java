@@ -22,10 +22,11 @@ public class AppDto {
             AppType type,
 
             @NotBlank(message = "[ERROR] GitHub URL은 필수입니다.")
-            String gitHubUrl,
+            String gitHubUrl
 
-            @NotBlank(message = "[ERROR] yml은 필수입니다.")
-            String yml
+            // 24.11.21 YML 스프링 부트 전용 -> 다른 프레임워크 적용 대비 제외
+            //@NotBlank(message = "[ERROR] yml은 필수입니다.")
+            //String yml
 
     ) {
         public App toEntity(User user) {
