@@ -24,6 +24,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class GitHubService {
 
+    private final String DEPLOY_BRANCH_NAME = "deploy";
+
     private final YamlFileReader yamlFileReader;
     private final AppRepository appRepository;
     private final UserRepository userRepository;
@@ -47,7 +49,7 @@ public class GitHubService {
         String fileName = "cicd.yml";
         String path = "/.github/workflows/"+fileName;
 
-        GitHubUtils.createFileContents(token, owner, repo, CreateCommitDto.from(path, content));
+        GitHubUtils.createFileContents(token, owner, repo, DEPLOY_BRANCH_NAME,  CreateCommitDto.from(path, content));
     }
 
 

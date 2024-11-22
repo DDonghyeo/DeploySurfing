@@ -32,7 +32,11 @@ public class GitHubUtils {
      * /repos/{owner}/{repo}/contents/{path}
      */
     public static void createFileContents(
-            String token, String owner, String repo, CreateCommitDto createCommitDto) {
+            String token,
+            String owner,
+            String repo,
+            String branch,
+            CreateCommitDto createCommitDto) {
         log.info("[ GitHubUtils ] File Commit started ...");
         CreateCommitRequestDto commitRequestDto = CreateCommitRequestDto.builder()
                 .owner(owner)
@@ -44,6 +48,7 @@ public class GitHubUtils {
                                 .name(DS_COMMITTER)
                                 .build()
                 )
+                .branch(branch)
                 .path(createCommitDto.path())
                 .content(Base64.getEncoder().encodeToString(createCommitDto.content()))
                 .headers(Map.of("X-GitHub-Api-Version", "2022-11-28"))
