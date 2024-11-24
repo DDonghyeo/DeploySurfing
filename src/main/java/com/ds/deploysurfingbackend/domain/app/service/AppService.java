@@ -51,9 +51,11 @@ public class AppService {
         App app = createAppDto.toEntity(user);
 
         //repo Settings
-        String repoName = getRepoName(createAppDto.gitHubUrl());
-        String owner = createAppDto.gitHubUrl();
+        String[] githubUrlData = parseGitHubUrl(createAppDto.gitHubUrl());
+        String owner = githubUrlData[0];
+        String repoName = githubUrlData[1];
 
+        //레포 Public Key 획득
         RepositoryPublicKeyResponseDto repositoryPublicKey
                 = GitHubUtils.getRepositoryPublicKey(owner, repoName, user.getGitHubToken());
 
@@ -70,7 +72,7 @@ public class AppService {
         appRepository.save(app);
     }
 
-    //앱 삭제
+    //앱 삭제 + EC2 종료
     @Transactional
     public void deleteAppAndTerminateEC2(AuthUser authUser, String appId) {
 
@@ -187,14 +189,7 @@ public class AppService {
         }
     }
 
-    private String getOwner(String githubUrl) {
-        return parseGitHubUrl(githubUrl)[0];
-    }
-
-    private String getRepoName(String githubUrl) {
-        return parseGitHubUrl(githubUrl)[1];
-    }
-
+    // Github Repo URL 파싱, [Owner, Name] 반환
     private String[] parseGitHubUrl(String githubUrl) {
         Matcher matcher = GITHUB_URL_PATTERN.matcher(githubUrl);
         if (matcher.find()) {
