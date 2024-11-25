@@ -8,8 +8,9 @@ import com.ds.deploysurfingbackend.domain.app.repository.GithubMetadataRepositor
 import com.ds.deploysurfingbackend.domain.aws.service.AWSService;
 import com.ds.deploysurfingbackend.domain.github.dto.ActionSecretDto;
 import com.ds.deploysurfingbackend.domain.github.dto.RepositoryPublicKeyResponseDto;
+import com.ds.deploysurfingbackend.domain.github.exception.GithubErrorCode;
 import com.ds.deploysurfingbackend.domain.github.service.GitHubService;
-import com.ds.deploysurfingbackend.domain.github.utils.GitHubUtils;
+import com.ds.deploysurfingbackend.domain.github.utils.GitHubApiClient;
 import com.ds.deploysurfingbackend.domain.user.auth.AuthUser;
 import com.ds.deploysurfingbackend.domain.user.entity.User;
 import com.ds.deploysurfingbackend.domain.app.dto.AppDto;
@@ -39,6 +40,7 @@ public class AppService {
     private final GithubMetadataRepository githubMetadataRepository;
     private final AWSService awsService;
     private final GitHubService gitHubService;
+    private final GitHubApiClient gitHubApiClient;
 
     //앱 생성
     @Transactional
@@ -57,7 +59,7 @@ public class AppService {
 
         //레포 Public Key 획득
         RepositoryPublicKeyResponseDto repositoryPublicKey
-                = GitHubUtils.getRepositoryPublicKey(owner, repoName, user.getGitHubToken());
+                = gitHubApiClient.getRepositoryPublicKey(owner, repoName, user.getGitHubToken());
 
 
         githubMetadataRepository.save(GithubMetaData.builder()
@@ -132,6 +134,10 @@ public class AppService {
         User user = userRepository.findByEmail(authUser.getEmail()).orElseThrow(
                 () -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
+        GithubMetaData githubMetaData = githubMetadataRepository.findByApp_Id(appId).orElseThrow(
+                () -> new CustomException(GithubErrorCode.GITHUB_METADATA_NOT_FOUND)
+        );
+
         checkAppInitialized(app);
         checkAppAccessPermissionByEmail(user.getEmail(), app);
 
@@ -142,23 +148,22 @@ public class AppService {
 
         //1. Action Secret 구성하기
         List<ActionSecretDto> secrets = createDefaultActionSecrets();
-        secrets.forEach(secret -> gitHubService.createActionSecret(appId, user.getGitHubToken(), secret));
-
+        secrets.forEach(secret -> gitHubService.createActionSecret(githubMetaData, user.getGitHubToken(), secret));
 
         //2. 깃허브 브랜치 만들기 : deploy
+        gitHubService.createBranch(githubMetaData, "deploy", user.getGitHubToken());
 
-        //3. 브랜치에 Dockerfile 생성하기
+        //3. Deploy 브랜치에 Dockerfile 생성하기
+        gitHubService.createDockerfile(githubMetaData, user.getGitHubToken(), "17");
 
-        //4. 브랜치에 .github/workflows 디렉토리 생성하기
-
-        //5. .github/workflows 디렉토리에 deploy.yml 생성하기
+        //4. .github/workflows 디렉토리에 deploy.yml 생성하기
+        gitHubService.createCICDScript(githubMetaData, user.getGitHubToken());
 
         //앱 초기설정 완료
-        app.setStatus(AppStatus.RUNNING);
-        app.setInit(true);
+        completeInitialization(app);
     }
 
-    private List<ActionSecretDto> createDefaultActionSecrets() {
+    private List<ActionSecretDto> createDefaultActionSecrets(String applicationYml) {
         return Arrays.asList(
                 new ActionSecretDto("APPLICATION_YML", "temp"),
                 new ActionSecretDto("DOCKERHUB_IMAGENAME", "temp"),
@@ -214,5 +219,10 @@ public class AppService {
     private void checkAppAccessPermissionById(Long userId, App app) {
         if (!app.getUser().getId().equals(userId))
             throw new CustomException(CommonErrorCode.NO_AUTHORIZED);
+    }
+
+    private void completeInitialization(App app) {
+        app.setStatus(AppStatus.RUNNING);
+        app.setInit(true);
     }
 }
