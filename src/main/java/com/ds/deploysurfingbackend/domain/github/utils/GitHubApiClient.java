@@ -19,24 +19,28 @@ import java.util.Map;
 @Slf4j
 @RequiredArgsConstructor
 @Component
-public class GitHubUtils {
+public class GitHubApiClient {
 
-    private static final String GITHUB_API_URL = "https://api.github.com/";
+    private final String GITHUB_API_URL = "https://api.github.com/";
 
-    private static final String DS_EMAIL = "ds@gmail.com";
-    private static final String DS_COMMITTER = "Deploy Surfing";
+    private final String DS_EMAIL = "ds@gmail.com";
+    private final String DS_COMMITTER = "Deploy Surfing";
+    private final Map<String, String> GITHUB_VERSION_HEADER = Map.of("X-GitHub-Api-Version", "2022-11-28");
+
+    private final WebClient githubWebClient;
 
     /**
-     * <h1>Create or update file contents</h1>
-     * 참고 : <a href= "https://docs.github.com/ko/rest/repos/contents?apiVersion=2022-11-28#create-or-update-file-contents">Link</a> <br>
-     * /repos/{owner}/{repo}/contents/{path}
+     * Create or update file contents
+     * @see <a href= "https://docs.github.com/ko/rest/repos/contents?apiVersion=2022-11-28#create-or-update-file-contents">Link</a> <br>
+     * @path /repos/{owner}/{repo}/contents/{path}
      */
-    public static void createFileContents(
+    public void createFileContents(
             String token,
             String owner,
             String repo,
             String branch,
             CreateCommitDto createCommitDto) {
+
         log.info("[ GitHubUtils ] File Commit started ...");
         CreateCommitRequestDto commitRequestDto = CreateCommitRequestDto.builder()
                 .owner(owner)
@@ -51,11 +55,11 @@ public class GitHubUtils {
                 .branch(branch)
                 .path(createCommitDto.path())
                 .content(Base64.getEncoder().encodeToString(createCommitDto.content()))
-                .headers(Map.of("X-GitHub-Api-Version", "2022-11-28"))
+                .headers(GITHUB_VERSION_HEADER)
                 .build();
 
-        WebClient.create(GITHUB_API_URL)
-                .put()
+
+        githubWebClient.put()
                 .uri(uriBuilder -> uriBuilder
                         .path("/repos")
                         .path("/"+owner)
@@ -67,24 +71,18 @@ public class GitHubUtils {
                 .header("Authorization", "Bearer " +token)
                 .body(Mono.just(commitRequestDto), CreateCommitRequestDto.class)
                 .retrieve()
-                //200 OK
-                //201 Created
-                //404 Resource not found
-                //409 Conflict
-                //422 Validation failed, or the endpoint has been spammed.
-                .onStatus(HttpStatusCode::is2xxSuccessful, clientResponse -> Mono.error(new CustomException(CommonErrorCode.SERVER_ERROR)))
-                .onStatus(HttpStatusCode::is4xxClientError, clientResponse -> Mono.error(new CustomException(CommonErrorCode.SERVER_ERROR)))
-                .toBodilessEntity().block();
+                .toBodilessEntity()
+                .block();
     }
 
     /**
-     * <h1>Get a repository public key</h1>
-     * 참고 : <a href= "https://docs.github.com/ko/rest/actions/secrets?apiVersion=2022-11-28#get-a-repository-public-key">Link</a> <br>
-     * /repos/{owner}/{repo}/actions/secrets/public-key
+     * Get a repository public key
+     * @see <a href= "https://docs.github.com/ko/rest/actions/secrets?apiVersion=2022-11-28#get-a-repository-public-key">Link</a> <br>
+     * @path /repos/{owner}/{repo}/actions/secrets/public-key
      */
-    public static RepositoryPublicKeyResponseDto getRepositoryPublicKey(final String owner, final String repo, final String token) {
+    public RepositoryPublicKeyResponseDto getRepositoryPublicKey(final String owner, final String repo, final String token) {
         log.info("[ GitHubUtils ] Getting Repository Public Key ...");
-        return WebClient.create(GITHUB_API_URL)
+        return githubWebClient
                 .get()
                 .uri(uriBuilder -> uriBuilder
                         .pathSegment("repos", owner, repo, "actions", "secrets", "public-key")
@@ -97,24 +95,25 @@ public class GitHubUtils {
     }
 
     /**
-     * <h1>Create or update a repository secret</h1>
-     * 참고 : <a href= "https://docs.github.com/ko/rest/actions/secrets?apiVersion=2022-11-28#create-or-update-a-repository-secret">Link</a> <br>
-     * /repos/{owner}/{repo}/actions/secrets/{secret_name}
+     * Create or update a repository secret
+     * @see <a href= "https://docs.github.com/ko/rest/actions/secrets?apiVersion=2022-11-28#create-or-update-a-repository-secret">Link</a> <br>
+     * @path /repos/{owner}/{repo}/actions/secrets/{secret_name}
      */
-    public static ResponseEntity<?> createOrUpdateRepositorySecret(
+    public void createOrUpdateRepositorySecret(
             final String owner, final String repo, final String token,
             final String secretName, final String encryptedSecretValue) {
 
         log.info("[ GitHubUtils ] Create or update repository secret ---> {}", secretName);
+
         CreateOrUpdateRepositorySecretRequestDto requestDto = CreateOrUpdateRepositorySecretRequestDto.builder()
                 .owner(owner)
                 .repo(repo)
                 .secretName(secretName)
                 .encryptedValue(encryptedSecretValue)
-                .headers(Map.of("X-GitHub-Api-Version", "2022-11-28"))
+                .headers(GITHUB_VERSION_HEADER)
                 .build();
 
-        return WebClient.create(GITHUB_API_URL)
+        githubWebClient
                 .put()
                 .uri(uriBuilder -> uriBuilder
                         .pathSegment("repos", owner, repo, "actions", "secrets", secretName)
@@ -123,20 +122,17 @@ public class GitHubUtils {
                 .header("Authorization", "Bearer " + token)
                 .body(Mono.just(requestDto), CreateOrUpdateRepositorySecretRequestDto.class)
                 .retrieve()
-                //201 : Created
-                //204 : Updated
-                .onStatus(HttpStatusCode::is4xxClientError, clientResponse -> Mono.error(new CustomException(CommonErrorCode.SERVER_ERROR)))
                 .toBodilessEntity().block();
     }
 
     /**
-     * <h1>List Branches</h1>
-     * 참고 : <a href= "https://docs.github.com/ko/rest/branches/branches?apiVersion=2022-11-28#list-branches">Link</a> <br>
-     * /repos/{owner}/{repo}/branches
+     * List Branches
+     * @see <a href= "https://docs.github.com/ko/rest/branches/branches?apiVersion=2022-11-28#list-branches">Link</a> <br>
+     * @path /repos/{owner}/{repo}/branches
      */
-    public static List<BranchListDto> listBranches(final String owner, final String repo, final String token) {
+    public List<BranchListDto> listBranches(final String owner, final String repo, final String token) {
 
-        return WebClient.create(GITHUB_API_URL)
+        return githubWebClient
                 .get()
                 .uri(uriBuilder -> uriBuilder
                         .pathSegment("repos", owner, repo, "branches")
@@ -144,12 +140,44 @@ public class GitHubUtils {
                 )
                 .header("Authorization", "Bearer " + token)
                 .retrieve()
-                //201 : Created
-                //204 : Updated
-                .onStatus(HttpStatusCode::is4xxClientError, clientResponse -> Mono.error(new CustomException(CommonErrorCode.SERVER_ERROR)))
                 .bodyToMono(new ParameterizedTypeReference<List<BranchListDto>>() {
                 })
                 .block();
     }
 
+    /**
+     * Create a branch
+     * @see <a href= "https://docs.github.com/en/rest/git/refs#create-a-reference">Link</a> <br>
+     * @path /repos/{owner}/{repo}/git/refs
+     */
+    public void createBranch(
+            final String owner,
+            final String repo,
+            final String branch,
+            final String token) {
+
+        //sha 추출
+        ReferenceResponseDto reference = githubWebClient
+                .get()
+                .uri("/repos/{owner}/{repo}/git/refs/heads/main", owner, repo)
+                .header("Authorization", token)
+                .retrieve()
+                .bodyToMono(ReferenceResponseDto.class)
+                .block();
+
+        //브랜치 생성
+        CreateBranchRequestDto requestDto = new CreateBranchRequestDto(
+                "refs/heads/" + branch,
+                reference.object().sha()
+        );
+
+        githubWebClient
+                .post()
+                .uri("/repos/{owner}/{repo}/git/refs", owner, repo)
+                .header("Authorization", token)
+                .body(Mono.just(requestDto), CreateBranchRequestDto.class)
+                .retrieve()
+                .toBodilessEntity()
+                .block();
+    }
 }
