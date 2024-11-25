@@ -27,7 +27,6 @@ public class AWSService {
     private final EC2InstanceManager ec2InstanceManager;
 
     //새로운 EC2 생성
-    @Async
     @RedissonLock(value = "#userId", waitTime = 10000, leaseTime = 5000)
     public void createEC2(AuthUser authUser, String name) {
 
@@ -47,9 +46,7 @@ public class AWSService {
 
         StaticCredentialsProvider role = AWSStsUtil.createStaticCredential(user);
 
-        EC2 ec2 = ec2Repository.findByEc2Id(ec2Id).orElseThrow(() -> new CustomException(AwsErrorCode.EC2_NOT_FOUND));
-
-        checkEc2AccessPermissionByEmail(authUser.getEmail(), ec2);
+        ec2Repository.findByEc2Id(ec2Id).orElseThrow(() -> new CustomException(AwsErrorCode.EC2_NOT_FOUND));
 
         ec2InstanceManager.pauseEC2(role, ec2Id);
     }
@@ -64,13 +61,6 @@ public class AWSService {
 
         EC2 ec2 = ec2Repository.findByEc2Id(ec2Id).orElseThrow(() -> new CustomException(AwsErrorCode.EC2_NOT_FOUND));
 
-        checkEc2AccessPermissionByEmail(authUser.getEmail(), ec2);
-
         ec2InstanceManager.terminateEC2(role, ec2Id, ec2.getAssociationId(), ec2.getSecurityGroupId(), ec2.getKeyName());
-    }
-
-    private void checkEc2AccessPermissionByEmail(String email, EC2 ec2) {
-        if (!ec2.getUser().getEmail().equals(email))
-            throw new CustomException(CommonErrorCode.NO_AUTHORIZED);
     }
 }
