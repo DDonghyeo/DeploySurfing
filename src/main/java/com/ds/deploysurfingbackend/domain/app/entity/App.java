@@ -54,11 +54,8 @@ public class App extends BaseTimeEntity {
     @OneToOne(mappedBy = "app", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private GithubMetaData gitHubMetaData;
 
-    //-------------------[ Type 별 필드. 정규화 필요 ]-----------------------
-    private String SpringBootVersion;
-
-    private String JavaVersion;
-
+    @OneToOne(mappedBy = "app", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private AppMetadata metaData;
 
     public void setUser(User user) {
         this.user = user;
