@@ -1,16 +1,15 @@
 package com.ds.deploysurfingbackend.domain.app.dto;
 
 import com.ds.deploysurfingbackend.domain.app.entity.App;
+import com.ds.deploysurfingbackend.domain.app.entity.AppMetadata;
 import com.ds.deploysurfingbackend.domain.app.entity.type.AppStatus;
 import com.ds.deploysurfingbackend.domain.app.entity.type.AppType;
 import com.ds.deploysurfingbackend.domain.user.entity.User;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Null;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Slf4j
 public class AppDto {
@@ -22,19 +21,32 @@ public class AppDto {
             AppType type,
 
             @NotBlank(message = "[ERROR] GitHub URL은 필수입니다.")
-            String gitHubUrl
+            String gitHubUrl,
 
             // 24.11.21 YML 스프링 부트 전용 -> 다른 프레임워크 적용 대비 제외
-            //@NotBlank(message = "[ERROR] yml은 필수입니다.")
-            //String yml
+            @Nullable
+            String yml,
+
+            @Nullable
+            String version,
+
+            @Nullable
+            String port
 
     ) {
         public App toEntity(User user) {
+
+            AppMetadata metaData = AppMetadata.builder()
+                    .version(version)
+                    .configFile(yml)
+                    .port(port)
+                    .build();
 
             return App.builder()
                     .name(name)
                     .type(type==AppType.SPRING? AppType.SPRING : AppType.DJANGO) //24.11.11 Spring or Django (임시)
                     .status(AppStatus.STARTING) // 초기는 종료 상태
+                    .metaData(metaData)
                     .user(user)
                     .build();
         }

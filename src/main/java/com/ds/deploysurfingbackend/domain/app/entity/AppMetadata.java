@@ -1,20 +1,15 @@
 package com.ds.deploysurfingbackend.domain.app.entity;
 
-import com.ds.deploysurfingbackend.domain.app.entity.type.FrameworkType;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Table(name = "app_metadata")
-@Inheritance(strategy = InheritanceType.JOINED)
-@DiscriminatorColumn //부모 클래스 선언 (JPA)
 @Getter
+@Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public abstract class AppMetadata {
+public class AppMetadata {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
@@ -23,17 +18,26 @@ public abstract class AppMetadata {
     @JoinColumn(name = "app_id")
     private App app;
 
-    @Column(name = "framework_type", nullable = false)
-    @Enumerated(EnumType.STRING)
-    private FrameworkType frameworkType;
-
     // 설정 파일 (yml)
-    @Column(columnDefinition = "json")
+    @Column
     private String configFile;
+
+    @Column
+    private String version;
+
+    @Column
+    private String port;
 
     public void setConfigFile(String configFiles) {
         this.configFile = configFiles;
     }
 
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+    public void setPort(String port) {
+        this.port = port;
+    }
 }
 
