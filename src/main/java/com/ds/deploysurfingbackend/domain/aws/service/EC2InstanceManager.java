@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -37,7 +38,7 @@ public class EC2InstanceManager {
         Region region = Region.AP_NORTHEAST_2; // 서울 REGION
         Ec2Client ec2 = createEc2Client(staticCredentialsProvider, region);
 
-        String keyFilePathStr = "" + name + ".pem";
+        String keyFilePathStr = UUID.randomUUID() + "_" + name + ".pem";
 
         try {
             createKeyPair(name, ec2, keyFilePathStr);
