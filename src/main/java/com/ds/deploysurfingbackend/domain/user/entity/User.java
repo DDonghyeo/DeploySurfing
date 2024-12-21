@@ -44,6 +44,9 @@ public class User extends BaseTimeEntity {
     private String dockerToken;
 
     @JsonIgnore
+    private String dockerHubName;
+
+    @JsonIgnore
     private String gitHubToken;
 
     private List<Role> roles;
