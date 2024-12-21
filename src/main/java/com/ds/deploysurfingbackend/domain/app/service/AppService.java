@@ -5,6 +5,7 @@ import com.ds.deploysurfingbackend.domain.app.entity.GithubMetaData;
 import com.ds.deploysurfingbackend.domain.app.entity.type.AppStatus;
 import com.ds.deploysurfingbackend.domain.app.exception.AppErrorCode;
 import com.ds.deploysurfingbackend.domain.app.repository.GithubMetadataRepository;
+import com.ds.deploysurfingbackend.domain.aws.entity.EC2;
 import com.ds.deploysurfingbackend.domain.aws.service.AWSService;
 import com.ds.deploysurfingbackend.domain.github.dto.ActionSecretDto;
 import com.ds.deploysurfingbackend.domain.github.dto.RepositoryPublicKeyResponseDto;
@@ -19,6 +20,7 @@ import com.ds.deploysurfingbackend.domain.user.exception.UserErrorCode;
 import com.ds.deploysurfingbackend.domain.user.repository.UserRepository;
 import com.ds.deploysurfingbackend.global.exception.CommonErrorCode;
 import com.ds.deploysurfingbackend.global.exception.CustomException;
+import com.ds.deploysurfingbackend.global.utils.FileReader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -41,6 +43,7 @@ public class AppService {
     private final AWSService awsService;
     private final GitHubService gitHubService;
     private final GitHubApiClient gitHubApiClient;
+    private final FileReader fileReader;
 
     //앱 생성
     @Transactional
@@ -144,10 +147,10 @@ public class AppService {
         //1. EC2 생성
         //TODO: EC2 생성되어 있는지 확인 필요
         app.setStatus(AppStatus.STARTING);
-        awsService.createEC2(authUser, app.getName());
+        EC2 ec2 = awsService.createEC2(authUser, app.getName());
 
-        //1. Action Secret 구성하기
-        List<ActionSecretDto> secrets = createDefaultActionSecrets();
+        //2. Action Secret 구성하기
+        List<ActionSecretDto> secrets = createSecretAction(user, app, ec2);
         secrets.forEach(secret -> gitHubService.createActionSecret(githubMetaData, user.getGitHubToken(), secret));
 
         //2. 깃허브 브랜치 만들기 : deploy
@@ -163,17 +166,6 @@ public class AppService {
         completeInitialization(app);
     }
 
-    private List<ActionSecretDto> createDefaultActionSecrets(String applicationYml) {
-        return Arrays.asList(
-                new ActionSecretDto("APPLICATION_YML", "temp"),
-                new ActionSecretDto("DOCKERHUB_IMAGENAME", "temp"),
-                new ActionSecretDto("DOCKERHUB_TOKEN", "temp"),
-                new ActionSecretDto("DOCKERHUB_USERNAME", "temp"),
-                new ActionSecretDto("EC2_HOST", "temp"),
-                new ActionSecretDto("SSH_KEY", "temp")
-        );
-    }
-
     @Transactional
     public void pauseApp(AuthUser authUser, String appId) {
         App app = appRepository.findById(appId).orElseThrow(
@@ -186,6 +178,19 @@ public class AppService {
         app.setStatus(AppStatus.PAUSED);
     }
 
+    private List<ActionSecretDto> createSecretAction(User user, App app, EC2 ec2) {
+        return Arrays.asList(
+                ActionSecretDto.of("APPLICATION_YML", app.getMetaData().getConfigFile()),
+                ActionSecretDto.of("DOCKERHUB_USERNAME", user.getDockerHubName()),
+                ActionSecretDto.of("DOCKERHUB_TOKEN", user.getDockerToken()),
+                ActionSecretDto.of("DOCKERHUB_IMAGENAME", app.getName()),
+                ActionSecretDto.of("EC2_HOST", ec2.getPublicIp()),
+                ActionSecretDto.of("EC2_USERNAME", "ec2-user"),
+                ActionSecretDto.of("EC2_PRIVATE_KEY", fileReader.readFileAsString(ec2.getKeyFilePath())),
+                ActionSecretDto.of("APP_PORT", app.getMetaData().getPort()) //임시
+
+        );
+    }
     private void checkAppInitialized(App app) {
         if (!app.isInit()) {
             //이미 초기 설정 되어있을 경우

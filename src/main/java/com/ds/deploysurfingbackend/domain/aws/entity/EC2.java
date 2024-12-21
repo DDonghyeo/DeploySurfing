@@ -14,7 +14,6 @@ import software.amazon.awssdk.services.ec2.model.InstanceType;
 public class EC2 {
 
     //EC2 메타데이터 저장
-
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
@@ -26,7 +25,7 @@ public class EC2 {
     private InstanceType instanceType;
 
     //IP : 할당받은 탄력적 IP
-    private String ip;
+    private String publicIp;
 
     //연결된 VPC ID
     private String vpcId;

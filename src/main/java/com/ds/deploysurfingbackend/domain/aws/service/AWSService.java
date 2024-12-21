@@ -28,14 +28,14 @@ public class AWSService {
 
     //새로운 EC2 생성
     @RedissonLock(value = "#userId", waitTime = 10000, leaseTime = 5000)
-    public void createEC2(AuthUser authUser, String name) {
+    public EC2 createEC2(AuthUser authUser, String name) {
 
         User user = userRepository.findByEmail(authUser.getEmail()).orElseThrow(
                 () -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
         StaticCredentialsProvider role = AWSStsUtil.createStaticCredential(user);
 
-        ec2InstanceManager.createFreeTierEC2(name, role);
+        return ec2InstanceManager.createFreeTierEC2(name, role);
     }
 
     //EC2 일시 중지
