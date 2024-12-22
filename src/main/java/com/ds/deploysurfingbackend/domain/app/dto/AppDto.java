@@ -45,7 +45,7 @@ public class AppDto {
             return App.builder()
                     .name(name)
                     .type(type==AppType.SPRING? AppType.SPRING : AppType.DJANGO) //24.11.11 Spring or Django (임시)
-                    .status(AppStatus.STARTING) // 초기는 종료 상태
+                    .status(AppStatus.INITIAL)
                     .metaData(metaData)
                     .user(user)
                     .build();
