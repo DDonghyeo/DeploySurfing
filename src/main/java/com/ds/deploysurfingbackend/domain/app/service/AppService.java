@@ -6,7 +6,7 @@ import com.ds.deploysurfingbackend.domain.app.entity.type.AppStatus;
 import com.ds.deploysurfingbackend.domain.app.exception.AppErrorCode;
 import com.ds.deploysurfingbackend.domain.app.repository.GithubMetadataRepository;
 import com.ds.deploysurfingbackend.domain.aws.entity.EC2;
-import com.ds.deploysurfingbackend.domain.aws.service.AWSService;
+import com.ds.deploysurfingbackend.domain.aws.service.AwsService;
 import com.ds.deploysurfingbackend.domain.github.dto.ActionSecretDto;
 import com.ds.deploysurfingbackend.domain.github.dto.RepositoryPublicKeyResponseDto;
 import com.ds.deploysurfingbackend.domain.github.exception.GithubErrorCode;
@@ -40,7 +40,7 @@ public class AppService {
     private final AppRepository appRepository;
     private final UserRepository userRepository;
     private final GithubMetadataRepository githubMetadataRepository;
-    private final AWSService awsService;
+    private final AwsService awsService;
     private final GitHubService gitHubService;
     private final GitHubApiClient gitHubApiClient;
     private final FileReader fileReader;

@@ -2,7 +2,6 @@ package com.ds.deploysurfingbackend.domain.app.controller;
 
 import com.ds.deploysurfingbackend.domain.app.dto.AppDto;
 import com.ds.deploysurfingbackend.domain.app.service.AppService;
-import com.ds.deploysurfingbackend.domain.aws.service.AWSService;
 import com.ds.deploysurfingbackend.domain.user.auth.AuthUser;
 import com.ds.deploysurfingbackend.global.annotation.CurrentUser;
 import io.swagger.v3.oas.annotations.Operation;
