@@ -1,6 +1,6 @@
 package com.ds.deploysurfingbackend.global.event;
 
-import com.ds.deploysurfingbackend.global.annotation.RedissonLock;
+import com.ds.deploysurfingbackend.global.event.entity.OutBoxEvent;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
