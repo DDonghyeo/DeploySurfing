@@ -18,7 +18,12 @@ public enum AppStatus {
     DEPLOY_BRANCH_CREATION_IN_PROGRESS("DEPLOY BRANCH 생성 중"),
     DOCKERFILE_CREATION_IN_PROGRESS("DOCKERFILE 생성 중"),
     DEPLOY_YML_CREATION_IN_PROGRESS("배포 스크립트 생성 중"),
-    CONFIGURATION_COMPLETED("설정 완료");
+    CONFIGURATION_COMPLETED("설정 완료"),
+    RUNNING("실행 중"),
+    PAUSED("중지됨"),
+    TERMINATED("종료됨"),
+    DELETED("삭제됨")
+    ;
 
     private final String status;
 
