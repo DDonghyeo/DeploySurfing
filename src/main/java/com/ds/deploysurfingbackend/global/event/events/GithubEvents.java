@@ -9,8 +9,8 @@ public class GithubEvents {
 
     public class SecretConfigurationEvent extends DeploymentEvent {
 
-        public SecretConfigurationEvent(SecretConfigPayload payload) {
-            super(EventType.CONFIG_SECRET, payload.toString());
+        public SecretConfigurationEvent(String payload) {
+            super(EventType.CONFIG_SECRET, payload);
         }
 
         @Getter
