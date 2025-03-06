@@ -8,6 +8,7 @@ import com.ds.deploysurfingbackend.domain.user.service.UserService;
 import com.ds.deploysurfingbackend.global.annotation.CurrentUser;
 import com.ds.deploysurfingbackend.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,25 +18,24 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RequestMapping("/user")
 @RestController
-@Tag(name = "User Controller")
 public class UserController {
 
     private final UserService userService;
 
-    @Operation(description = "사용자 정보 조회")
+    @Operation(tags = "user", summary = "사용자 조회", description = "사용자 정보 조회")
     @GetMapping("")
     public ApiResponse<?> getUser(@CurrentUser AuthUser authUser) {
         return ApiResponse.onSuccess(userService.getUser(authUser));
     }
 
-    @Operation(description = "사용자 회원가입")
+    @Operation(tags = "user", summary = "사용자 회원 가입", description = "사용자 회원 가입")
     @PostMapping("/signup")
     public ApiResponse<?> createUser(UserRequest.SignUpDto signUpDto) {
         userService.signup(signUpDto);
         return ApiResponse.onSuccess(HttpStatus.CREATED, "회원가입 완료");
     }
 
-    @Operation(description = "사용자 정보 수정")
+    @Operation(tags = "user", summary = "사용자 수정", description = "사용자 정보 수정")
     @PostMapping("/update")
     public ApiResponse<?> updateUser(@CurrentUser AuthUser authUser,
                                      UserRequest.UpdateDto updateDto) {
@@ -43,7 +43,7 @@ public class UserController {
         return ApiResponse.onSuccess(HttpStatus.OK, "수정이 완료 되었습니다.");
     }
 
-    @Operation(description = "사용자 탈퇴")
+    @Operation(tags = "user", summary = "사용자 탈퇴", description = "사용자 탈퇴")
     @DeleteMapping("/withdraw")
     public ApiResponse<?> deleteUser(@CurrentUser AuthUser authUser) {
         userService.deleteUser(authUser);
@@ -51,7 +51,7 @@ public class UserController {
     }
 
     //Swagger용 가짜 컨트롤러
-    @Operation(description = "로그인")
+    @Operation(tags = "user", summary = "사용자 로그인", description = "로그인")
     @PostMapping("/login")
     public ApiResponse<JwtDto> login(@RequestBody LoginRequestDto loginRequestDto) {
         return null;

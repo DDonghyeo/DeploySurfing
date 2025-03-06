@@ -17,6 +17,7 @@ public class UserRequest {
            String awsAccessKey,
            String awsSecretKey,
            String dockerToken,
+           String dockerHubName,
            String gitHubToken
     ){}
 
