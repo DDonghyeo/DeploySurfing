@@ -12,7 +12,7 @@ import lombok.*;
 @Getter
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "app")
 public class App extends BaseTimeEntity {
@@ -72,5 +72,10 @@ public class App extends BaseTimeEntity {
 
     public void setStatus(AppStatus status) {
         this.status = status;
+    }
+
+    public void setMetaData(AppMetadata metaData) {
+        this.metaData = metaData;
+        metaData.setApp(this);
     }
 }
