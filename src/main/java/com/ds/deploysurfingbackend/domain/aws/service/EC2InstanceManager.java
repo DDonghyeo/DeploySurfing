@@ -48,7 +48,7 @@ public class EC2InstanceManager {
             String vpcId = getVpcId(ec2);
 
             log.info(" [ AWS Utils ] 새로운 보안그룹을 생성합니다. VPC ID ---> {}", vpcId);
-            String secGroupId = createBasicSecurityGroup(ec2, SECURITY_GROUP_NAME, SECURITY_GROUP_DESC, vpcId);
+            String secGroupId = createBasicSecurityGroup(ec2, SECURITY_GROUP_NAME + UUID.randomUUID().toString().substring(0, 4), SECURITY_GROUP_DESC, vpcId);
             log.info(" [ AWS Utils ] 새로운 보안그룹을 생성에 성공했습니다. Group ID ---> {}", secGroupId);
 
 
