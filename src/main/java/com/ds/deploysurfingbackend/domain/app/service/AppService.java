@@ -6,6 +6,7 @@ import com.ds.deploysurfingbackend.domain.app.entity.type.AppStatus;
 import com.ds.deploysurfingbackend.domain.app.exception.AppErrorCode;
 import com.ds.deploysurfingbackend.domain.app.repository.GithubMetadataRepository;
 import com.ds.deploysurfingbackend.domain.aws.entity.EC2;
+import com.ds.deploysurfingbackend.domain.aws.repository.EC2Repository;
 import com.ds.deploysurfingbackend.domain.aws.service.AwsService;
 import com.ds.deploysurfingbackend.domain.github.dto.ActionSecretDto;
 import com.ds.deploysurfingbackend.domain.github.dto.RepositoryPublicKeyResponseDto;
@@ -20,7 +21,7 @@ import com.ds.deploysurfingbackend.domain.user.exception.UserErrorCode;
 import com.ds.deploysurfingbackend.domain.user.repository.UserRepository;
 import com.ds.deploysurfingbackend.global.exception.CommonErrorCode;
 import com.ds.deploysurfingbackend.global.exception.CustomException;
-import com.ds.deploysurfingbackend.global.utils.FileReader;
+import com.ds.deploysurfingbackend.global.utils.FileReaderUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -43,11 +45,11 @@ public class AppService {
     private final AwsService awsService;
     private final GitHubService gitHubService;
     private final GitHubApiClient gitHubApiClient;
-    private final FileReader fileReader;
+    private final FileReaderUtil fileReader;
 
     //앱 생성
     @Transactional
-    public void createApp(AuthUser authUser, AppDto.CreateAppDto createAppDto) {
+    public void createApp(final AuthUser authUser, final AppDto.CreateAppDto createAppDto) {
 
 
         User user = userRepository.findByEmail(authUser.getEmail()).orElseThrow(
@@ -63,7 +65,6 @@ public class AppService {
         //레포 Public Key 획득
         RepositoryPublicKeyResponseDto repositoryPublicKey
                 = gitHubApiClient.getRepositoryPublicKey(owner, repoName, user.getGitHubToken());
-
 
         githubMetadataRepository.save(GithubMetaData.builder()
                 .owner(owner)
@@ -99,9 +100,12 @@ public class AppService {
         App app = appRepository.findById(appId).orElseThrow(
                 () -> new CustomException(AppErrorCode.APP_NOT_FOUND));
 
+        GithubMetaData githubMetaData = githubMetadataRepository.findByApp_Id(appId).orElseThrow(
+                () -> new CustomException(GithubErrorCode.GITHUB_METADATA_NOT_FOUND));
+
         checkAppAccessPermissionByEmail(authUser.getEmail(), app);
 
-        return AppDto.AppResponseDto.from(app);
+        return AppDto.AppResponseDto.from(app, githubMetaData);
     }
 
     //앱 리스트 가져오기
@@ -109,7 +113,11 @@ public class AppService {
     public List<AppDto.AppResponseDto> getAppList(AuthUser authUser) {
         return appRepository.findAllByUserId(authUser.getId())
                         .stream()
-                        .map(AppDto.AppResponseDto::from)
+                        .map((app) ->{
+                            GithubMetaData githubMetaData = githubMetadataRepository.findByApp_Id(app.getId()).orElseThrow(
+                                    () -> new CustomException(GithubErrorCode.GITHUB_METADATA_NOT_FOUND));
+                            return AppDto.AppResponseDto.from(app, githubMetaData);
+                        })
                         .toList();
     }
 
@@ -134,6 +142,7 @@ public class AppService {
         App app = appRepository.findById(appId).orElseThrow(
                 () -> new CustomException(AppErrorCode.APP_NOT_FOUND));
 
+        log.info(authUser.getEmail());
         User user = userRepository.findByEmail(authUser.getEmail()).orElseThrow(
                 () -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
@@ -146,17 +155,23 @@ public class AppService {
 
         //1. EC2 생성
         //TODO: EC2 생성되어 있는지 확인 필요
-        app.setStatus(AppStatus.STARTING);
+        app.setStatus(AppStatus.EC2_CREATION_STARTED);
         EC2 ec2 = awsService.createEC2(authUser, app.getName());
+        app.setStatus(AppStatus.EC2_CREATION_COMPLETED);
+
 
         //2. Action Secret 구성하기
+        app.setStatus(AppStatus.ACTION_SECRET_CONFIGURATION_IN_PROGRESS);
         List<ActionSecretDto> secrets = createSecretAction(user, app, ec2);
         secrets.forEach(secret -> gitHubService.createActionSecret(githubMetaData, user.getGitHubToken(), secret));
 
+
         //2. 깃허브 브랜치 만들기 : deploy
+        app.setStatus(AppStatus.DEPLOY_BRANCH_CREATION_IN_PROGRESS);
         gitHubService.createBranch(githubMetaData, "deploy", user.getGitHubToken());
 
         //3. Deploy 브랜치에 Dockerfile 생성하기
+        app.setStatus(AppStatus.DOCKERFILE_CREATION_IN_PROGRESS);
         gitHubService.createDockerfile(githubMetaData, user.getGitHubToken(), "17");
 
         //4. .github/workflows 디렉토리에 deploy.yml 생성하기
@@ -192,7 +207,7 @@ public class AppService {
         );
     }
     private void checkAppInitialized(App app) {
-        if (!app.isInit()) {
+        if (app.isInit()) {
             //이미 초기 설정 되어있을 경우
             log.warn("[ App Service ] 이미 초기 설정이 실행된 앱입니다. ---> {}", app.getId());
             throw new CustomException(AppErrorCode.APP_ALREADY_INITIALIZED);
@@ -212,7 +227,7 @@ public class AppService {
             return new String[]{owner, repoName};
         } else {
             log.error(" [ AppService ] URL 형식이 올바르지 않습니다: {}", githubUrl);
-            throw new IllegalArgumentException("유효하지 않은 GitHub URL 형식입니다.");
+            throw new CustomException(GithubErrorCode.INFORMAL_GITHUB_URL);
         }
     }
 

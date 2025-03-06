@@ -2,6 +2,7 @@ package com.ds.deploysurfingbackend.domain.app.dto;
 
 import com.ds.deploysurfingbackend.domain.app.entity.App;
 import com.ds.deploysurfingbackend.domain.app.entity.AppMetadata;
+import com.ds.deploysurfingbackend.domain.app.entity.GithubMetaData;
 import com.ds.deploysurfingbackend.domain.app.entity.type.AppStatus;
 import com.ds.deploysurfingbackend.domain.app.entity.type.AppType;
 import com.ds.deploysurfingbackend.domain.user.entity.User;
@@ -36,19 +37,22 @@ public class AppDto {
     ) {
         public App toEntity(User user) {
 
+
+            App app = App.builder()
+                    .name(name)
+                    .type(type == AppType.SPRING ? AppType.SPRING : AppType.DJANGO) //24.11.11 Spring or Django (임시)
+                    .status(AppStatus.INITIAL)
+                    .user(user)
+                    .build();
+
             AppMetadata metaData = AppMetadata.builder()
                     .version(version)
                     .configFile(yml)
                     .port(port)
                     .build();
 
-            return App.builder()
-                    .name(name)
-                    .type(type==AppType.SPRING? AppType.SPRING : AppType.DJANGO) //24.11.11 Spring or Django (임시)
-                    .status(AppStatus.INITIAL)
-                    .metaData(metaData)
-                    .user(user)
-                    .build();
+            app.setMetaData(metaData);
+            return app;
         }
 
     }
@@ -76,11 +80,13 @@ public class AppDto {
 
             String repoName
     ){
-        public static AppResponseDto from(App app) {
+        public static AppResponseDto from(App app, GithubMetaData githubMetaData) {
             return AppResponseDto.builder()
                     .id(app.getId())
                     .name(app.getName())
                     .type(app.getType())
+                    .owner(githubMetaData.getOwner())
+                    .repoName(githubMetaData.getRepoName())
                     .description(app.getDescription())
                     .status(app.getStatus())
                     .build();

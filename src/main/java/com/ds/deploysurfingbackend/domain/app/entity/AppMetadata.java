@@ -36,6 +36,10 @@ public class AppMetadata {
         this.version = version;
     }
 
+    public void setApp(App app) {
+        this.app = app;
+    }
+
     public void setPort(String port) {
         this.port = port;
     }
