@@ -29,6 +29,7 @@ public class User extends BaseTimeEntity {
     @JsonIgnore
     private String password;
 
+    @Enumerated(EnumType.STRING)
     private UserStatus status;
 
     @JsonIgnore
@@ -57,6 +58,7 @@ public class User extends BaseTimeEntity {
         awsAccessKey = updateDto.awsAccessKey() == null ? awsAccessKey : updateDto.awsAccessKey();
         awsSecretKey = updateDto.awsSecretKey() == null ? awsSecretKey : updateDto.awsSecretKey();
         dockerToken = updateDto.dockerToken() == null ? dockerToken : updateDto.dockerToken();
+        dockerHubName = updateDto.dockerHubName() == null ? dockerToken : updateDto.dockerHubName();
         gitHubToken = updateDto.gitHubToken() == null ? gitHubToken : updateDto.gitHubToken();
     }
 
