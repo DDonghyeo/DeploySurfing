@@ -2,7 +2,7 @@ name: Java CI/CD with Gradle
 
 on:
   push:
-    branches: [ "main" ] #push할 경우 사용 할 branch 명 기입
+    branches: [ "deploy" ] #push할 경우 사용 할 branch 명 기입
 
 jobs:
   deploy:
