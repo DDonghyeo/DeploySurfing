@@ -6,10 +6,8 @@ import com.goterl.lazysodium.LazySodiumJava;
 import com.goterl.lazysodium.SodiumJava;
 import com.goterl.lazysodium.interfaces.Box;
 import com.goterl.lazysodium.utils.Key;
-import com.goterl.lazysodium.utils.KeyPair;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.springframework.web.util.UriBuilder;
 
 import java.util.Base64;
 
@@ -19,29 +17,27 @@ public class SodiumUtils {
 
     private static final LazySodiumJava lazySodium = new LazySodiumJava(new SodiumJava());
 
-    public static String encryptSecret(String repoPublicKey, String message) {
+    public static String encryptSecret(String repoPublicKey, String secretValue) {
         try {
-            // 1. Repository Public Key 디코딩
+            // 1. GitHub에서 제공한 Public Key를 Base64 디코딩
             byte[] decodedPublicKey = Base64.getDecoder().decode(repoPublicKey);
             Key publicKey = Key.fromBytes(decodedPublicKey);
 
-            // 2. 임시 키 쌍 생성
-            KeyPair ephemeralKeyPair = lazySodium.cryptoBoxKeypair();
+            // 2. 암호화할 비밀값을 바이트 배열로 변환
+            byte[] secretBytes = secretValue.getBytes();
 
-            // 3. 암호화
-            byte[] messageBytes = message.getBytes();
-            byte[] cipherText = new byte[Box.SEALBYTES + messageBytes.length];
-            lazySodium.cryptoBoxSeal(cipherText, messageBytes, messageBytes.length, publicKey.getAsBytes());
+            // 3. 암호화 (crypto_box_seal 사용, 공개 키만 사용)
+            byte[] encryptedBytes = new byte[Box.SEALBYTES + secretBytes.length];
+            boolean success = lazySodium.cryptoBoxSeal(encryptedBytes, secretBytes, secretBytes.length, publicKey.getAsBytes());
 
-            // 4. 암호화된 메시지, 임시 공개키 결합
-            byte[] combined = new byte[ephemeralKeyPair.getPublicKey().getAsBytes().length + cipherText.length];
-            System.arraycopy(ephemeralKeyPair.getPublicKey().getAsBytes(), 0, combined, 0, ephemeralKeyPair.getPublicKey().getAsBytes().length);
-            System.arraycopy(cipherText, 0, combined, ephemeralKeyPair.getPublicKey().getAsBytes().length, cipherText.length);
+            if (!success) {
+                throw new CustomException(CommonErrorCode.SERVER_ERROR, "Secret 암호화 실패");
+            }
 
-            // 5. Base64 인코딩
-            return Base64.getEncoder().encodeToString(combined);
+            // 4. 암호화된 데이터를 Base64 인코딩하여 반환
+            return Base64.getEncoder().encodeToString(encryptedBytes);
         } catch (Exception e) {
-            throw new CustomException(CommonErrorCode.SERVER_ERROR, "Secret 암호화 과정에 문제가 발생했습니다.");
+            throw new CustomException(CommonErrorCode.SERVER_ERROR, "Secret 암호화 중 오류 발생: " + e.getMessage());
         }
     }
 }
