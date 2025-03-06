@@ -1,13 +1,9 @@
 package com.ds.deploysurfingbackend.domain.github.utils;
 
 import com.ds.deploysurfingbackend.domain.github.dto.*;
-import com.ds.deploysurfingbackend.global.exception.CommonErrorCode;
-import com.ds.deploysurfingbackend.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -101,16 +97,15 @@ public class GitHubApiClient {
      */
     public void createOrUpdateRepositorySecret(
             final String owner, final String repo, final String token,
-            final String secretName, final String encryptedSecretValue) {
+            final String secretName, final String encryptedSecretValue, final String keyId) {
 
         log.info("[ GitHubUtils ] Create or update repository secret ---> {}", secretName);
+        log.info("value {}", encryptedSecretValue);
+        log.info("key id {}", keyId);
 
         CreateOrUpdateRepositorySecretRequestDto requestDto = CreateOrUpdateRepositorySecretRequestDto.builder()
-                .owner(owner)
-                .repo(repo)
-                .secretName(secretName)
                 .encryptedValue(encryptedSecretValue)
-                .headers(GITHUB_VERSION_HEADER)
+                .keyId(keyId)
                 .build();
 
         githubWebClient
@@ -156,11 +151,16 @@ public class GitHubApiClient {
             final String branch,
             final String token) {
 
+        log.info("[ GitHubUtils ] Create branch ---> {}/{}/{}", owner, repo, branch);
+
         //sha 추출
         ReferenceResponseDto reference = githubWebClient
                 .get()
-                .uri("/repos/{owner}/{repo}/git/refs/heads/main", owner, repo)
-                .header("Authorization", token)
+                .uri(uriBuilder -> uriBuilder
+                        .pathSegment("repos", owner, repo, "git","refs","heads","main")
+                        .build()
+                )
+                .header("Authorization","Bearer " + token)
                 .retrieve()
                 .bodyToMono(ReferenceResponseDto.class)
                 .block();
@@ -173,8 +173,11 @@ public class GitHubApiClient {
 
         githubWebClient
                 .post()
-                .uri("/repos/{owner}/{repo}/git/refs", owner, repo)
-                .header("Authorization", token)
+                .uri(uriBuilder -> uriBuilder
+                        .pathSegment("repos", owner, repo, "git","refs")
+                        .build()
+                )
+                .header("Authorization","Bearer " + token)
                 .body(Mono.just(requestDto), CreateBranchRequestDto.class)
                 .retrieve()
                 .toBodilessEntity()
