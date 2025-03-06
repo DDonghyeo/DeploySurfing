@@ -63,6 +63,12 @@ public class EC2InstanceManager {
             //----------------- [ EC2 정보 ] -----------------
             String instanceIdVal = response.instances().get(0).instanceId();
             ec2.waiter().waitUntilInstanceRunning(r -> r.instanceIds(instanceIdVal));
+
+            //태그 생성(이름)
+            ec2.createTags(CreateTagsRequest.builder()
+                    .resources(instanceIdVal)
+                    .tags(Tag.builder().key("Name").value(name).build())
+                    .build());
             log.info(" [ AWS Utils ] 인스턴스가 실행되었습니다. instance id ---> {}", instanceIdVal);
 
 
@@ -78,7 +84,7 @@ public class EC2InstanceManager {
 
             log.info("[ AWS Utils ] : EC2 생성에 성공했습니다. ---> {}", instanceIdVal);
 
-            describeEC2Instances(ec2, instanceIdVal);
+            String publicIp = getPublicIp(ec2, instanceIdVal);
 
 
             ec2.close();
@@ -88,6 +94,7 @@ public class EC2InstanceManager {
                     .instanceType(InstanceType.T2_MICRO)
                     .securityGroupName(SECURITY_GROUP_NAME)
                     .vpcId(vpcId)
+                    .publicIp(publicIp)
                     .keyFilePath(keyFilePathStr)
                     .associationId(associationId)
                     .securityGroupId(secGroupId)
@@ -259,23 +266,22 @@ public class EC2InstanceManager {
     }
 
 
-    public void describeEC2Instances(Ec2Client ec2, String newInstanceId) {
+    public String getPublicIp(Ec2Client ec2, String newInstanceId) {
 
-        boolean isRunning = false;
         DescribeInstancesRequest request = DescribeInstancesRequest.builder()
                 .instanceIds(newInstanceId)
                 .build();
 
-        while (!isRunning) {
-            DescribeInstancesResponse response = ec2.describeInstances(request);
-            String state = response.reservations().get(0).instances().get(0).state().name().name();
-            if (state.compareTo("RUNNING") == 0) {
-                log.info("[ AWS Utils ] EC2 Image ID ---> {}", response.reservations().get(0).instances().get(0).imageId());
-                log.info("[ AWS Utils ] EC2 Instance Type ---> {}", response.reservations().get(0).instances().get(0).instanceType());
-                log.info("[ AWS Utils ] EC2 State ---> {}", response.reservations().get(0).instances().get(0).state().name());
-                log.info("[ AWS Utils ] EC2 Public Address ---> {}", response.reservations().get(0).instances().get(0).publicIpAddress());
-                isRunning = true;
-            }
+        DescribeInstancesResponse response = ec2.describeInstances(request);
+        String state = response.reservations().get(0).instances().get(0).state().name().name();
+        if (state.compareTo("RUNNING") == 0) {
+            log.info("[ AWS Utils ] EC2 Image ID ---> {}", response.reservations().get(0).instances().get(0).imageId());
+            log.info("[ AWS Utils ] EC2 Instance Type ---> {}", response.reservations().get(0).instances().get(0).instanceType());
+            log.info("[ AWS Utils ] EC2 State ---> {}", response.reservations().get(0).instances().get(0).state().name());
+            log.info("[ AWS Utils ] EC2 Public Address ---> {}", response.reservations().get(0).instances().get(0).publicIpAddress());
+            return response.reservations().get(0).instances().get(0).publicIpAddress();
+        } else {
+            throw new CustomException(AwsErrorCode.INSTACE_IS_NOT_RUNNING);
         }
     }
 
@@ -286,31 +292,36 @@ public class EC2InstanceManager {
 
 
     public String createBasicSecurityGroup(Ec2Client ec2, String groupName, String groupDesc, String vpcId) {
-        CreateSecurityGroupRequest createRequest = CreateSecurityGroupRequest.builder()
-                .groupName(groupName)
-                .description(groupDesc)
-                .vpcId(vpcId)
-                .build();
+        try {
+            CreateSecurityGroupRequest createRequest = CreateSecurityGroupRequest.builder()
+                    .groupName(groupName)
+                    .description(groupDesc)
+                    .vpcId(vpcId)
+                    .build();
 
-        CreateSecurityGroupResponse resp = ec2.createSecurityGroup(createRequest);
-        IpRange ipAllRange = IpRange.builder()
-                .cidrIp("")
-                .cidrIp("0.0.0.0/0")
-                .build();
+            CreateSecurityGroupResponse resp = ec2.createSecurityGroup(createRequest);
+            IpRange ipAllRange = IpRange.builder()
+                    .cidrIp("")
+                    .cidrIp("0.0.0.0/0")
+                    .build();
 
-        List<IpPermission> ipPermissions = new ArrayList<>();
-        ipPermissions.add(getIpPerm(80, ipAllRange));
-        ipPermissions.add(getIpPerm(443, ipAllRange));
-        ipPermissions.add(getIpPerm(22, ipAllRange));
+            List<IpPermission> ipPermissions = new ArrayList<>();
+            ipPermissions.add(getIpPerm(80, ipAllRange));
+            ipPermissions.add(getIpPerm(443, ipAllRange));
+            ipPermissions.add(getIpPerm(22, ipAllRange));
 
-        AuthorizeSecurityGroupIngressRequest authRequest = AuthorizeSecurityGroupIngressRequest.builder()
-                .groupName(groupName)
-                .ipPermissions(ipPermissions)
-                .build();
+            AuthorizeSecurityGroupIngressRequest authRequest = AuthorizeSecurityGroupIngressRequest.builder()
+                    .groupName(groupName)
+                    .ipPermissions(ipPermissions)
+                    .build();
 
-        ec2.authorizeSecurityGroupIngress(authRequest);
-        log.info("[ AWS Utils ] 보안 그룹 생성에 성공했습니다. ---> {}", groupName);
-        return resp.groupId();
+            ec2.authorizeSecurityGroupIngress(authRequest);
+            log.info("[ AWS Utils ] 보안 그룹 생성에 성공했습니다. ---> {}", groupName);
+            return resp.groupId();
+        } catch (Ec2Exception e) {
+            throw new CustomException(AwsErrorCode.DUPLICATE_SECURITY_GROUP);
+        }
+
     }
 
     public String allocateAddress(Ec2Client ec2) {
