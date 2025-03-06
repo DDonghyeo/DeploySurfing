@@ -1,9 +1,12 @@
 package com.ds.deploysurfingbackend.global.config;
 
+import com.ds.deploysurfingbackend.domain.github.dto.GithubErrorResponse;
+import com.ds.deploysurfingbackend.domain.github.exception.GithubErrorCode;
 import com.ds.deploysurfingbackend.global.exception.CommonErrorCode;
 import com.ds.deploysurfingbackend.global.exception.CustomException;
 import io.netty.channel.ChannelOption;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -17,6 +20,7 @@ import reactor.netty.resources.ConnectionProvider;
 
 import java.time.Duration;
 
+@Slf4j
 @Configuration
 @RequiredArgsConstructor
 public class GithubWebClientConfig {
@@ -28,22 +32,9 @@ public class GithubWebClientConfig {
         return WebClient.builder()
                 .baseUrl(GITHUB_API_URL)
                 .defaultHeader("X-GitHub-Api-Version", "2022-11-28")
-                .filter(this::addAuthorizationHeader)
+                .defaultHeader("Accept", "application/vnd.github+json")
                 .filter(this::handleErrors)
                 .build();
-    }
-
-    //권한 토큰 필터
-    private Mono<ClientResponse> addAuthorizationHeader(ClientRequest request, ExchangeFunction next) {
-        String token = request.headers().getFirst("Authorization");
-        if (token == null) {
-            return next.exchange(request);
-        }
-
-        ClientRequest authorizedRequest = ClientRequest.from(request)
-                .header("Authorization", token.startsWith("Bearer ") ? token : "Bearer " + token)
-                .build();
-        return next.exchange(authorizedRequest);
     }
 
     private Mono<ClientResponse> handleErrors(ClientRequest request, ExchangeFunction next) {
@@ -53,19 +44,30 @@ public class GithubWebClientConfig {
                         return Mono.just(response);
                     }
 
-                    //200 OK
-                    //201 Created
-                    //404 Resource not found
-                    //409 Conflict
-                    //422 Validation failed, or the endpoint has been spammed.
-                    if (response.statusCode().is4xxClientError()) {
-                        return Mono.error(new CustomException(CommonErrorCode.SERVER_ERROR));
-                    }
+                    return response.bodyToMono(GithubErrorResponse.class).flatMap(githubErrorResponse -> {
+                        log.error(githubErrorResponse.message());
+                        return Mono.error(new CustomException(GithubErrorCode.GITHUB_METADATA_NOT_FOUND));
+                    });
 
-                    return response.createException()
-                            .flatMap(Mono::error);
+
+//                    if (response.statusCode().is4xxClientError()) {
+//                        if (response.statusCode().value() == 401) {
+//                            return Mono.error(new CustomException(GithubErrorCode.GITHUB_METADATA_NOT_FOUND));
+//                        } else if (response.statusCode().value() == 403) {
+//                            return Mono.error(new CustomException(GithubErrorCode.INVALID_GITHUB_TOKEN));
+//                        } else if (response.statusCode().value() == 404) {
+//                            return Mono.error(new CustomException(GithubErrorCode.GITHUB_METADATA_NOT_FOUND));
+//                        } else {
+//                            return Mono.error(new CustomException(CommonErrorCode.SERVER_ERROR));
+//                        }
+//                    }
+//
+//                    return response.createException()
+//                            .flatMap(Mono::error);
+//                });
                 });
     }
+}
 
 //    HttpClient httpClient = HttpClient.create()
 //            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000); // 10초
@@ -79,4 +81,4 @@ public class GithubWebClientConfig {
 //                .build();
 //
 //    }
-}
+
