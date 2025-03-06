@@ -18,6 +18,8 @@ public enum GithubErrorCode implements ErrorCode {
     APP_ALREADY_INITIALIZED(INTERNAL_SERVER_ERROR, "GITHUB_501", "이미 초기화 된 앱입니다."),
 
     DEPLOY_BRANCH_ALREADY_EXISTS(INTERNAL_SERVER_ERROR, "GITHUB_502", "배포 브랜치가 이미 존재합니다."),
+    INFORMAL_GITHUB_URL(INTERNAL_SERVER_ERROR, "GITHUB_503", "올바르지 않은 Github Repository URL 입니다."),
+    INVALID_GITHUB_TOKEN(INTERNAL_SERVER_ERROR, "GITHUB_403", "올바르지 않은 깃허브 토큰입니다.")
 
     ;
 
