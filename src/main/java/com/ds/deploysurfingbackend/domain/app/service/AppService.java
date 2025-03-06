@@ -198,7 +198,7 @@ public class AppService {
                 ActionSecretDto.of("APPLICATION_YML", app.getMetaData().getConfigFile()),
                 ActionSecretDto.of("DOCKERHUB_USERNAME", user.getDockerHubName()),
                 ActionSecretDto.of("DOCKERHUB_TOKEN", user.getDockerToken()),
-                ActionSecretDto.of("DOCKERHUB_IMAGENAME", app.getName()),
+                ActionSecretDto.of("DOCKERHUB_IMAGENAME", app.getName().toLowerCase()),
                 ActionSecretDto.of("EC2_HOST", ec2.getPublicIp()),
                 ActionSecretDto.of("EC2_USERNAME", "ec2-user"),
                 ActionSecretDto.of("EC2_PRIVATE_KEY", fileReader.readFileAsString(ec2.getKeyFilePath())),
