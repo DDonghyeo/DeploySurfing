@@ -1,7 +1,7 @@
 FROM openjdk:17-jdk
 
 
-RUN apt-get update && apt-get install -y libsodium23
+RUN apk add --no-cache libsodium
 
 ARG JAR_FILE=build/libs/*.jar
 COPY ${JAR_FILE} app.jar
