@@ -1,8 +1,10 @@
 package com.ds.deploysurfingbackend.domain.aws.utils;
 
+import com.ds.deploysurfingbackend.domain.aws.exception.AwsErrorCode;
 import com.ds.deploysurfingbackend.domain.user.auth.AuthUser;
 import com.ds.deploysurfingbackend.domain.user.entity.User;
 import com.ds.deploysurfingbackend.domain.user.repository.UserRepository;
+import com.ds.deploysurfingbackend.global.exception.CustomException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -48,12 +50,13 @@ public class AWSStsUtil {
 
         } catch (StsException e) {
             log.error(e.getMessage());
-            throw new RuntimeException();
+            e.printStackTrace();
+            throw new CustomException(AwsErrorCode.INVALID_TOKEN);
         }
     }
 
     public static StaticCredentialsProvider createStaticCredential(User user) {
-        return assumeRole("role", SESSION_NAME,
+        return assumeRole(user.getAwsRoleArn(), SESSION_NAME,
                 user.getAwsAccessKey(), user.getAwsSecretKey());
     }
 

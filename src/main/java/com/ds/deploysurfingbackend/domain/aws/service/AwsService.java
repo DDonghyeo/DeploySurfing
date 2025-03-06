@@ -25,7 +25,7 @@ public class AwsService {
     private final EC2InstanceManager ec2InstanceManager;
 
     //새로운 EC2 생성
-    @RedissonLock(value = "#userId", waitTime = 10000, leaseTime = 5000)
+    @RedissonLock(value = "#userId", waitTime = 10000, leaseTime = 500000)
     public EC2 createEC2(AuthUser authUser, String name) {
 
         User user = userRepository.findByEmail(authUser.getEmail()).orElseThrow(
@@ -33,7 +33,9 @@ public class AwsService {
 
         StaticCredentialsProvider role = AWSStsUtil.createStaticCredential(user);
 
-        return ec2InstanceManager.createFreeTierEC2(name, role);
+        EC2 ec2 = ec2InstanceManager.createFreeTierEC2(name, role);
+        ec2Repository.save(ec2);
+        return ec2;
     }
 
     //EC2 일시 중지
