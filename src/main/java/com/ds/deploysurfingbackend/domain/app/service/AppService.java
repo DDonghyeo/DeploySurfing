@@ -38,7 +38,7 @@ import java.util.regex.Pattern;
 @Service
 public class AppService {
 
-    private static final Pattern GITHUB_URL_PATTERN = Pattern.compile("https://github.com/(\\w+)/(\\w+)");
+    private static final Pattern GITHUB_URL_PATTERN = Pattern.compile("https://github.com/([\\w-]+)/([\\w-]+)");
     private final AppRepository appRepository;
     private final UserRepository userRepository;
     private final GithubMetadataRepository githubMetadataRepository;
